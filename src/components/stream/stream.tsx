@@ -57,10 +57,6 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
   const timeRef = useRef(0);
   const sourcesRef = useRef<SourceItem[]>([]);
   const destinationsRef = useRef<DestinationItem[]>([]);
-  const isDraggingRef = useRef<{
-    type: "source" | "destination" | "profile" | null;
-    index: number;
-  }>({ type: null, index: -1 });
   const userPointRef = useRef({ x: 0, y: 0 });
 
   // State for React circle positions
@@ -73,8 +69,8 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
   // Clustering logic
   const createSourceItems = (width: number, height: number): SourceItem[] => {
     // Get all profiles except the current one for sources
-    const sourceProfiles = profiles.filter(p => p.id !== profile.id);
-    
+    const sourceProfiles = profiles.filter((p) => p.id !== profile.id);
+
     const yPositions = [
       height * 0.1,
       height * 0.2,
@@ -86,7 +82,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     if (sourceProfiles.length <= 4) {
       // No clustering needed - show all as individual circles
       return sourceProfiles.map((prof, index) => ({
-        type: 'single' as const,
+        type: "single" as const,
         x: width * 0.1,
         y: yPositions[index] || height * 0.5,
         profiles: [prof],
@@ -94,48 +90,46 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     } else {
       // Clustering logic: first 3 as individual, rest as cluster
       const items: SourceItem[] = [];
-      
+
       // First 3 as individual circles
       for (let i = 0; i < 3; i++) {
         items.push({
-          type: 'single',
+          type: "single",
           x: width * 0.1,
           y: yPositions[i],
           profiles: [sourceProfiles[i]],
         });
       }
-      
+
       // Remaining profiles as cluster
       const clusterProfiles = sourceProfiles.slice(3);
       items.push({
-        type: 'cluster',
+        type: "cluster",
         x: width * 0.1,
         y: yPositions[3],
         profiles: clusterProfiles,
       });
-      
+
       return items;
     }
   };
 
   // Clustering logic for destinations
-  const createDestinationItems = (width: number, height: number): DestinationItem[] => {
+  const createDestinationItems = (
+    width: number,
+    height: number
+  ): DestinationItem[] => {
     // Get all profiles except the current one for destinations
-    const availableProfiles = profiles.filter(p => p.id !== profile.id);
+    const availableProfiles = profiles.filter((p) => p.id !== profile.id);
     // Use different profiles than sources (take from the end)
     const destinationProfiles = availableProfiles.slice(-4); // Take last 4 profiles
-    
-    const yPositions = [
-      height * 0.2,
-      height * 0.4,
-      height * 0.6,
-      height * 0.8,
-    ];
+
+    const yPositions = [height * 0.2, height * 0.4, height * 0.6, height * 0.8];
 
     if (destinationProfiles.length <= 2) {
       // No clustering needed - show all as individual circles
       return destinationProfiles.map((prof, index) => ({
-        type: 'single' as const,
+        type: "single" as const,
         x: width * 0.9,
         y: yPositions[index] || height * 0.5,
         profiles: [prof],
@@ -143,30 +137,30 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     } else {
       // Clustering logic: first 2 as individual, rest as cluster
       const items: DestinationItem[] = [];
-      
+
       // First 2 as individual circles
       for (let i = 0; i < 2; i++) {
         if (destinationProfiles[i]) {
           items.push({
-            type: 'single',
+            type: "single",
             x: width * 0.9,
             y: yPositions[i],
             profiles: [destinationProfiles[i]],
           });
         }
       }
-      
+
       // Remaining profiles as cluster (if any)
       const clusterProfiles = destinationProfiles.slice(2);
       if (clusterProfiles.length > 0) {
         items.push({
-          type: 'cluster',
+          type: "cluster",
           x: width * 0.9,
           y: yPositions[2],
           profiles: clusterProfiles,
         });
       }
-      
+
       return items;
     }
   };
@@ -554,24 +548,20 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
   };
 
   // Handle dragging for individual destination circles
-  const handleSingleDestinationDrag = (index: number) => (e: any) => {
-    if (e.type === 'drag') {
-      destinationsRef.current[index].y = e.clientY;
-      setCirclePositions((prev) => ({
-        ...prev,
-        destinations: [...destinationsRef.current],
-      }));
-    }
+  const handleSingleDestinationDrag = (index: number) => (newY: number) => {
+    destinationsRef.current[index].y = newY;
+    setCirclePositions((prev) => ({
+      ...prev,
+      destinations: [...destinationsRef.current],
+    }));
   };
 
-  const handleProfileDrag = (e: any) => {
-    if (e.type === 'drag') {
-      userPointRef.current.y = e.clientY;
-      setCirclePositions((prev) => ({
-        ...prev,
-        user: { ...userPointRef.current },
-      }));
-    }
+  const handleProfileDrag = (newY: number) => {
+    userPointRef.current.y = newY;
+    setCirclePositions((prev) => ({
+      ...prev,
+      user: { ...userPointRef.current },
+    }));
   };
 
   return (
@@ -579,8 +569,8 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
       <Canvas ref={canvasRef} />
 
       {/* Source Circles and Clusters */}
-      {circlePositions.sources.map((source, index) => (
-        source.type === 'single' ? (
+      {circlePositions.sources.map((source, index) =>
+        source.type === "single" ? (
           <Circle
             key={`source-${index}`}
             type="source"
@@ -599,7 +589,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             onDrag={handleSourceDrag(index)}
           />
         )
-      ))}
+      )}
 
       {/* User Circle with Image */}
       <Circle
@@ -611,8 +601,8 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
       />
 
       {/* Destination Circles and Clusters */}
-      {circlePositions.destinations.map((destination, index) => (
-        destination.type === 'single' ? (
+      {circlePositions.destinations.map((destination, index) =>
+        destination.type === "single" ? (
           <Circle
             key={`destination-${index}`}
             type="destination"
@@ -631,7 +621,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             onDrag={handleDestinationDrag(index)}
           />
         )
-      ))}
+      )}
 
       <Mrr value={mrr} position="absolute" bottom="0" left="50%" />
     </StreamContainer>
