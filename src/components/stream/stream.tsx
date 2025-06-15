@@ -587,7 +587,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             posX={source.x}
             posY={source.y}
             profile={source.profiles[0]}
-            onMouseDown={handleSingleSourceDrag(index)}
+            onDrag={handleSingleSourceDrag(index)}
           />
         ) : (
           <Cluster
@@ -607,7 +607,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
         posX={circlePositions.user.x}
         posY={circlePositions.user.y}
         profile={profile}
-        onMouseDown={handleProfileDrag}
+        onDrag={handleProfileDrag}
       />
 
       {/* Destination Circles and Clusters */}
@@ -619,7 +619,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             posX={destination.x}
             posY={destination.y}
             profile={destination.profiles[0]}
-            onMouseDown={handleSingleDestinationDrag(index)}
+            onDrag={handleSingleDestinationDrag(index)}
           />
         ) : (
           <Cluster
