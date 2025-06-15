@@ -1,12 +1,16 @@
-import React from "react";
+import React, { useRef } from "react";
 import styled from "styled-components";
+import { Link } from "react-router-dom";
 import { Profile } from "../../types/profile";
+import Tooltip from "../tooltip";
+import ProfileTooltipContent from "../profileTooltipContent";
 
 interface CircleProps {
   type: "source" | "profile" | "destination";
   posX: number;
   posY: number;
   profile: Profile;
+  onDrag?: (newY: number) => void;
 }
 
 const BACKGROUND_COLORS = {
@@ -15,114 +19,95 @@ const BACKGROUND_COLORS = {
   destination: "rgb(255, 198, 99)",
 };
 
-function Circle({ type, posX, posY, profile }: CircleProps) {
+function Circle({ type, posX, posY, profile, onDrag }: CircleProps) {
+  const isDraggingRef = useRef(false);
+  const dragStartYRef = useRef(0);
+
+  // Handle dragging
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Don't start drag if clicking on a link
+    if ((e.target as HTMLElement).closest("a")) {
+      return;
+    }
+
+    e.preventDefault();
+    isDraggingRef.current = true;
+    dragStartYRef.current = e.clientY;
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      const deltaY = moveEvent.clientY - dragStartYRef.current;
+      const newY = Math.max(
+        80,
+        Math.min(window.innerHeight - 144, posY + deltaY)
+      ); // Account for navbar + circle radius
+      onDrag?.(newY);
+    };
+
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+  };
+
+  if (type === "profile") {
+    return (
+      <>
+        <ProfileName $left={posX} $top={posY - 100}>
+          {profile.name}
+        </ProfileName>
+        <CircleContainer
+          $left={posX}
+          $top={posY}
+          $isDragging={isDraggingRef.current}
+          $backgroundColor={BACKGROUND_COLORS.profile}
+          onMouseDown={handleMouseDown}
+        >
+          <Tooltip
+            trigger={
+              <Link to={`/profile/${profile.id}`}>
+                <CircleImage src={profile.image} alt={profile.name} />
+              </Link>
+            }
+            content={<ProfileTooltipContent profile={profile} />}
+            position="right"
+          />
+        </CircleContainer>
+      </>
+    );
+  }
+
+  // For source and destination circles, show profile image with tooltip
   return (
     <CircleContainer
       $left={posX}
       $top={posY}
+      $isDragging={isDraggingRef.current}
       $backgroundColor={BACKGROUND_COLORS[type]}
-    />
-
-    // {/* User Circle with Image */}
-    // <UserCircle
-    //   style={{
-    //     left: circlePositions.user.x,
-    //     top: circlePositions.user.y,
-    //   }}
-    //   onMouseEnter={() => setShowTooltip(true)}
-    //   onMouseLeave={() => setShowTooltip(false)}
-    // >
-    //   <UserImage src={profile.image} alt={profile.name} />
-
-    //   {/* Tooltip */}
-    //   {showTooltip && (
-    //     <Tooltip>
-    //       <TooltipContent>
-    //         <TooltipHeader>
-    //           <img
-    //             src={profile.image}
-    //             alt={profile.name}
-    //             className="w-12 h-12 rounded-full object-cover"
-    //           />
-    //           <div>
-    //             <div className="flex items-center space-x-2 mb-1">
-    //               {profile.type === "person" ? (
-    //                 <User className="w-4 h-4 text-blue-400" />
-    //               ) : (
-    //                 <Building2 className="w-4 h-4 text-purple-400" />
-    //               )}
-    //               <h3 className="font-semibold text-white">{profile.name}</h3>
-    //             </div>
-    //             {profile.companyType && (
-    //               <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-300">
-    //                 {profile.companyType}
-    //               </span>
-    //             )}
-    //           </div>
-    //         </TooltipHeader>
-
-    //         <p className="text-white/80 text-sm mb-3">
-    //           {profile.description}
-    //         </p>
-
-    //         <div className="space-y-2 text-sm">
-    //           <div className="flex items-center justify-between">
-    //             <span className="text-white/60 flex items-center space-x-1">
-    //               <Target className="w-3 h-3" />
-    //               <span>Current MRR</span>
-    //             </span>
-    //             <span className="text-green-400 font-medium">
-    //               ${currentMrr.toLocaleString()}
-    //             </span>
-    //           </div>
-
-    //           <div className="flex items-center justify-between">
-    //             <span className="text-white/60 flex items-center space-x-1">
-    //               <Target className="w-3 h-3" />
-    //               <span>Target MRR</span>
-    //             </span>
-    //             <span className="text-blue-400 font-medium">
-    //               ${profile.targetMrr.toLocaleString()}
-    //             </span>
-    //           </div>
-
-    //           <div className="flex items-center justify-between">
-    //             <span className="text-white/60 flex items-center space-x-1">
-    //               <Calendar className="w-3 h-3" />
-    //               <span>Created</span>
-    //             </span>
-    //             <span className="text-white/80">
-    //               {formatDate(profile.createdAt)}
-    //             </span>
-    //           </div>
-    //         </div>
-
-    //         <div className="mt-3">
-    //           <div className="flex items-center justify-between text-xs mb-1">
-    //             <span className="text-white/60">Progress</span>
-    //             <span className="text-white/80">
-    //               {progressPercentage.toFixed(1)}%
-    //             </span>
-    //           </div>
-    //           <div className="w-full bg-white/10 rounded-full h-2">
-    //             <div
-    //               className="bg-gradient-to-r from-green-400 to-blue-400 h-2 rounded-full"
-    //               style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-    //             />
-    //           </div>
-    //         </div>
-    //       </TooltipContent>
-    //     </Tooltip>
-    //   )}
-    // </UserCircle>
+      onMouseDown={handleMouseDown}
+    >
+      <Tooltip
+        trigger={
+          <Link to={`/profile/${profile.id}`}>
+            <CircleImage src={profile.image} alt={profile.name} />
+          </Link>
+        }
+        content={<ProfileTooltipContent profile={profile} />}
+        position={type === "destination" ? "left" : "right"}
+      />
+    </CircleContainer>
   );
 }
 
-const ProfileName = styled.div`
+const ProfileName = styled.div<{
+  $left: number;
+  $top: number;
+}>`
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -180px);
+  transform: translateX(-50%);
   font-size: 2.5rem;
   font-weight: bold;
   color: white;
@@ -131,21 +116,27 @@ const ProfileName = styled.div`
   z-index: 10;
   text-align: center;
   white-space: nowrap;
+  ${({ $left, $top }) => `
+    left: ${$left}px;
+    top: ${$top}px;
+  `}
 `;
 
 const CircleContainer = styled.div<{
   $left: number;
   $top: number;
   $backgroundColor: string;
+  $isDragging?: boolean;
 }>`
   position: absolute;
   width: 160px;
   height: 160px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(0, 0, 0, 0.3);
   z-index: 5;
-  pointer-events: none;
+  cursor: ${(props) => (props.$isDragging ? "grabbing" : "grab")};
+  padding: 4px;
+
   ${({ $left, $top, $backgroundColor }) => `
     left: ${$left}px;
     top: ${$top}px;
@@ -153,50 +144,17 @@ const CircleContainer = styled.div<{
   `}
 `;
 
-const UserCircle = styled.div`
-  position: absolute;
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  border: 3px solid rgba(255, 255, 255, 0.3);
-  z-index: 10;
-  cursor: pointer;
-  overflow: hidden;
-`;
-
-const UserImage = styled.img`
-  width: 100%;
-  height: 100%;
+const CircleImage = styled.img`
+  width: 152px;
+  height: 152px;
   object-fit: cover;
   border-radius: 50%;
-  pointer-events: none; /* Prevents image from interfering with dragging */
-`;
-
-const Tooltip = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 120px;
-  transform: translateY(-50%);
-  z-index: 20;
+  transition: transform 0.2s ease;
   pointer-events: none;
-`;
 
-const TooltipContent = styled.div`
-  background: rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 16px;
-  min-width: 280px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-`;
-
-const TooltipHeader = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  &:hover {
+    transform: scale(1.04);
+  }
 `;
 
 export default Circle;

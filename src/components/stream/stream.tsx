@@ -2,8 +2,10 @@ import React, { useRef, useEffect, useState } from "react";
 import styled from "styled-components";
 import Mrr from "../mrr";
 import { Profile } from "../../types/profile";
-import { User, Building2, Calendar, Target } from "lucide-react";
+import { SourceItem, DestinationItem } from "../../types/source";
+import { profiles } from "../../data/profiles";
 import Circle from "./circle";
+import Cluster from "./cluster";
 
 interface Particle {
   x: number;
@@ -23,7 +25,7 @@ interface Particle {
   type: "source" | "destination";
 }
 
-const PARTICLES_PER_SOURCE = 1200;
+const PARTICLES_PER_SOURCE = 400;
 const cubicBezier = (
   t: number,
   p0: number,
@@ -53,8 +55,8 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const mousePositionRef = useRef({ x: 0, y: 0 });
   const timeRef = useRef(0);
-  const sourcesRef = useRef<{ x: number; y: number }[]>([]);
-  const destinationsRef = useRef<{ x: number; y: number }[]>([]);
+  const sourcesRef = useRef<SourceItem[]>([]);
+  const destinationsRef = useRef<DestinationItem[]>([]);
   const isDraggingRef = useRef<{
     type: "source" | "destination" | "profile" | null;
     index: number;
@@ -63,10 +65,111 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
 
   // State for React circle positions
   const [circlePositions, setCirclePositions] = useState({
-    sources: [] as { x: number; y: number }[],
-    destinations: [] as { x: number; y: number }[],
+    sources: [] as SourceItem[],
+    destinations: [] as DestinationItem[],
     user: { x: 0, y: 0 },
   });
+
+  // Clustering logic
+  const createSourceItems = (width: number, height: number): SourceItem[] => {
+    // Get all profiles except the current one for sources
+    const sourceProfiles = profiles.filter(p => p.id !== profile.id);
+    
+    const yPositions = [
+      height * 0.1,
+      height * 0.2,
+      height * 0.4,
+      height * 0.6,
+      height * 0.9,
+    ];
+
+    if (sourceProfiles.length <= 4) {
+      // No clustering needed - show all as individual circles
+      return sourceProfiles.map((prof, index) => ({
+        type: 'single' as const,
+        x: width * 0.1,
+        y: yPositions[index] || height * 0.5,
+        profiles: [prof],
+      }));
+    } else {
+      // Clustering logic: first 3 as individual, rest as cluster
+      const items: SourceItem[] = [];
+      
+      // First 3 as individual circles
+      for (let i = 0; i < 3; i++) {
+        items.push({
+          type: 'single',
+          x: width * 0.1,
+          y: yPositions[i],
+          profiles: [sourceProfiles[i]],
+        });
+      }
+      
+      // Remaining profiles as cluster
+      const clusterProfiles = sourceProfiles.slice(3);
+      items.push({
+        type: 'cluster',
+        x: width * 0.1,
+        y: yPositions[3],
+        profiles: clusterProfiles,
+      });
+      
+      return items;
+    }
+  };
+
+  // Clustering logic for destinations
+  const createDestinationItems = (width: number, height: number): DestinationItem[] => {
+    // Get all profiles except the current one for destinations
+    const availableProfiles = profiles.filter(p => p.id !== profile.id);
+    // Use different profiles than sources (take from the end)
+    const destinationProfiles = availableProfiles.slice(-4); // Take last 4 profiles
+    
+    const yPositions = [
+      height * 0.2,
+      height * 0.4,
+      height * 0.6,
+      height * 0.8,
+    ];
+
+    if (destinationProfiles.length <= 2) {
+      // No clustering needed - show all as individual circles
+      return destinationProfiles.map((prof, index) => ({
+        type: 'single' as const,
+        x: width * 0.9,
+        y: yPositions[index] || height * 0.5,
+        profiles: [prof],
+      }));
+    } else {
+      // Clustering logic: first 2 as individual, rest as cluster
+      const items: DestinationItem[] = [];
+      
+      // First 2 as individual circles
+      for (let i = 0; i < 2; i++) {
+        if (destinationProfiles[i]) {
+          items.push({
+            type: 'single',
+            x: width * 0.9,
+            y: yPositions[i],
+            profiles: [destinationProfiles[i]],
+          });
+        }
+      }
+      
+      // Remaining profiles as cluster (if any)
+      const clusterProfiles = destinationProfiles.slice(2);
+      if (clusterProfiles.length > 0) {
+        items.push({
+          type: 'cluster',
+          x: width * 0.9,
+          y: yPositions[2],
+          profiles: clusterProfiles,
+        });
+      }
+      
+      return items;
+    }
+  };
 
   // Update dimensions on resize
   useEffect(() => {
@@ -80,15 +183,8 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
         height,
       });
 
-      const newSources = [
-        { x: width * 0.1, y: height * 0.1 },
-        { x: width * 0.1, y: height * 0.5 },
-        { x: width * 0.1, y: height * 0.9 },
-      ];
-      const newDestinations = [
-        { x: width * 0.9, y: height * 0.3 },
-        { x: width * 0.9, y: height * 0.7 },
-      ];
+      const newSources = createSourceItems(width, height);
+      const newDestinations = createDestinationItems(width, height);
       const newUser = {
         x: width * 0.5,
         y: height * 0.5,
@@ -109,21 +205,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     updateDimensions();
     window.addEventListener("resize", updateDimensions);
     return () => window.removeEventListener("resize", updateDimensions);
-  }, []);
-
-  // Helper functions for profile details
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const currentMrr = Math.floor(
-    profile.targetMrr * (0.3 + Math.random() * 0.6)
-  );
-  const progressPercentage = (currentMrr / profile.targetMrr) * 100;
+  }, [profile.id]);
 
   // Canvas setup and animation
   useEffect(() => {
@@ -145,100 +227,6 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     };
 
     canvas.addEventListener("mousemove", handleMouseMove);
-
-    // Handle dragging functionality
-    const handleSetCurrentIsDraggingRef = (
-      type?: "source" | "destination" | "profile" | null,
-      index?: number
-    ) => {
-      isDraggingRef.current = { type: type ?? null, index: index ?? -1 };
-    };
-
-    const handleMouseDown = (event: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
-      const clickRadius = 80; // Same as circle radius
-
-      // Check if clicking on a source
-      for (let i = 0; i < sourcesRef.current.length; i++) {
-        const source = sourcesRef.current[i];
-        const distance = Math.sqrt(
-          Math.pow(mouseX - source.x, 2) + Math.pow(mouseY - source.y, 2)
-        );
-        if (distance <= clickRadius) {
-          handleSetCurrentIsDraggingRef("source", i);
-          return;
-        }
-      }
-
-      // Check if clicking on a destination
-      for (let i = 0; i < destinationsRef.current.length; i++) {
-        const destination = destinationsRef.current[i];
-        const distance = Math.sqrt(
-          Math.pow(mouseX - destination.x, 2) +
-            Math.pow(mouseY - destination.y, 2)
-        );
-        if (distance <= clickRadius) {
-          handleSetCurrentIsDraggingRef("destination", i);
-          return;
-        }
-      }
-
-      // Check if clicking on the center circle
-      const distance = Math.sqrt(
-        Math.pow(mouseX - userPointRef.current.x, 2) +
-          Math.pow(mouseY - userPointRef.current.y, 2)
-      );
-      if (distance <= clickRadius) {
-        handleSetCurrentIsDraggingRef("profile", 0);
-        return;
-      }
-    };
-
-    const handleMouseUp = () => {
-      handleSetCurrentIsDraggingRef(null, -1);
-    };
-
-    const handleDrag = (event: MouseEvent) => {
-      if (isDraggingRef.current.type === null) return;
-
-      const rect = canvas.getBoundingClientRect();
-      const mouseY = event.clientY - rect.top;
-
-      // Constrain Y position to canvas bounds with padding
-      const constrainedY = Math.max(
-        80,
-        Math.min(dimensions.height - 80, mouseY)
-      );
-
-      if (isDraggingRef.current.type === "source") {
-        sourcesRef.current[isDraggingRef.current.index].y = constrainedY;
-        // Update React state
-        setCirclePositions((prev) => ({
-          ...prev,
-          sources: [...sourcesRef.current],
-        }));
-      } else if (isDraggingRef.current.type === "destination") {
-        destinationsRef.current[isDraggingRef.current.index].y = constrainedY;
-        // Update React state
-        setCirclePositions((prev) => ({
-          ...prev,
-          destinations: [...destinationsRef.current],
-        }));
-      } else if (isDraggingRef.current.type === "profile") {
-        userPointRef.current.y = constrainedY;
-        // Update React state
-        setCirclePositions((prev) => ({
-          ...prev,
-          user: { ...userPointRef.current },
-        }));
-      }
-    };
-
-    canvas.addEventListener("mousedown", handleMouseDown);
-    canvas.addEventListener("mouseup", handleMouseUp);
-    canvas.addEventListener("mousemove", handleDrag);
 
     // Simple noise function for organic movement
     const noise = (x: number, y: number, time: number) => {
@@ -533,28 +521,84 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
 
     return () => {
       canvas.removeEventListener("mousemove", handleMouseMove);
-      canvas.removeEventListener("mousedown", handleMouseDown);
-      canvas.removeEventListener("mouseup", handleMouseUp);
-      canvas.removeEventListener("mousemove", handleDrag);
       if (animationIdRef.current) {
         cancelAnimationFrame(animationIdRef.current);
       }
     };
   }, [dimensions]);
 
+  // Handle dragging for circles and clusters
+  const handleSourceDrag = (index: number) => (newY: number) => {
+    sourcesRef.current[index].y = newY;
+    setCirclePositions((prev) => ({
+      ...prev,
+      sources: [...sourcesRef.current],
+    }));
+  };
+
+  // Handle dragging for individual source circles
+  const handleSingleSourceDrag = (index: number) => (newY: number) => {
+    sourcesRef.current[index].y = newY;
+    setCirclePositions((prev) => ({
+      ...prev,
+      sources: [...sourcesRef.current],
+    }));
+  };
+
+  const handleDestinationDrag = (index: number) => (newY: number) => {
+    destinationsRef.current[index].y = newY;
+    setCirclePositions((prev) => ({
+      ...prev,
+      destinations: [...destinationsRef.current],
+    }));
+  };
+
+  // Handle dragging for individual destination circles
+  const handleSingleDestinationDrag = (index: number) => (e: any) => {
+    if (e.type === 'drag') {
+      destinationsRef.current[index].y = e.clientY;
+      setCirclePositions((prev) => ({
+        ...prev,
+        destinations: [...destinationsRef.current],
+      }));
+    }
+  };
+
+  const handleProfileDrag = (e: any) => {
+    if (e.type === 'drag') {
+      userPointRef.current.y = e.clientY;
+      setCirclePositions((prev) => ({
+        ...prev,
+        user: { ...userPointRef.current },
+      }));
+    }
+  };
+
   return (
     <StreamContainer>
       <Canvas ref={canvasRef} />
 
-      {/* Source Circles */}
+      {/* Source Circles and Clusters */}
       {circlePositions.sources.map((source, index) => (
-        <Circle
-          key={`source-${index}`}
-          type="source"
-          posX={source.x}
-          posY={source.y}
-          profile={profile}
-        />
+        source.type === 'single' ? (
+          <Circle
+            key={`source-${index}`}
+            type="source"
+            posX={source.x}
+            posY={source.y}
+            profile={source.profiles[0]}
+            onMouseDown={handleSingleSourceDrag(index)}
+          />
+        ) : (
+          <Cluster
+            key={`cluster-${index}`}
+            type="source"
+            posX={source.x}
+            posY={source.y}
+            profiles={source.profiles}
+            onDrag={handleSourceDrag(index)}
+          />
+        )
       ))}
 
       {/* User Circle with Image */}
@@ -563,17 +607,30 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
         posX={circlePositions.user.x}
         posY={circlePositions.user.y}
         profile={profile}
+        onMouseDown={handleProfileDrag}
       />
 
-      {/* Destination Circles */}
+      {/* Destination Circles and Clusters */}
       {circlePositions.destinations.map((destination, index) => (
-        <Circle
-          key={`destination-${index}`}
-          type="destination"
-          posX={destination.x}
-          posY={destination.y}
-          profile={profile}
-        />
+        destination.type === 'single' ? (
+          <Circle
+            key={`destination-${index}`}
+            type="destination"
+            posX={destination.x}
+            posY={destination.y}
+            profile={destination.profiles[0]}
+            onMouseDown={handleSingleDestinationDrag(index)}
+          />
+        ) : (
+          <Cluster
+            key={`destination-cluster-${index}`}
+            type="destination"
+            posX={destination.x}
+            posY={destination.y}
+            profiles={destination.profiles}
+            onDrag={handleDestinationDrag(index)}
+          />
+        )
       ))}
 
       <Mrr value={mrr} position="absolute" bottom="0" left="50%" />
@@ -585,7 +642,6 @@ const StreamContainer = styled.div`
   position: relative;
   width: 100%;
   height: 100%;
-  /* Removed overflow: hidden to allow tooltip to show */
 `;
 
 const Canvas = styled.canvas`
