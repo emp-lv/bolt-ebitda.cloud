@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrendingUp, Users, Building2 } from 'lucide-react';
 import Navbar from '../components/navbar';
+import Footer from '../components/footer';
 import ProfileCard from '../components/profileCard';
 import { profiles } from '../data/profiles';
 
@@ -11,7 +12,7 @@ function Home() {
   const totalTargetMrr = profiles.reduce((sum, p) => sum + p.targetMrr, 0);
 
   return (
-    <div className="min-h-screen relative">
+    <div className="min-h-screen relative home-page-bg">
       <Navbar />
       <div className="pt-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
@@ -75,6 +76,9 @@ function Home() {
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

@@ -22,11 +22,29 @@
 }
 
 :root {
+  /* Stream page colors (current) */
   --bg1: #f3e8f8;
   --bg2: #f2f3ee;
   --bg3: #eef7e8;
   --bg4: #fef7e1;
+  
+  /* Edit page colors (darker) */
+  --edit-bg1: #2a2d2a;
+  --edit-bg2: #1f2f2a;
+  --edit-bg3: #243529;
+  --edit-bg4: #1a2e26;
+  --edit-accent1: #4ade80;
+  --edit-accent2: #10b981;
+  --edit-accent3: #6ee7b7;
+  
+  /* Home page colors (warmer) */
+  --home-bg1: #f8f3e8;
+  --home-bg2: #eef2f3;
+  --home-bg3: #e8f7ee;
+  --home-bg4: #f7e1fe;
 }
+
+/* Default body background (for stream page) */
 body {
   height: 100%;
   margin: 0;
@@ -36,11 +54,42 @@ body {
     linear-gradient(-45deg, var(--bg4) 0%, var(--bg3) 0.3%, var(--bg2) 112%, transparent 11%),
     linear-gradient(-90deg, var(--bg3) 100%, var(--bg3) 65%, transparent 20%);
 }
+
 html {
   height: 100%;
 }
+
 body > div {
   width: 100%;
   height: 100%;
   background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAG0lEQVQIW2NkYGCQBOLnQAwGjDAGNgGwSgwVAE+2AgXahLM7AAAAAElFTkSuQmCC) repeat; 
+}
+
+/* Edit page specific background */
+.edit-page-bg {
+  background: 
+    radial-gradient(circle at 20% 80%, var(--edit-accent1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, var(--edit-accent2) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, var(--edit-accent3) 0%, transparent 50%),
+    linear-gradient(135deg, var(--edit-bg1) 0%, var(--edit-bg2) 30%, var(--edit-bg3) 70%, var(--edit-bg4) 100%);
+  background-attachment: fixed;
+  background-blend-mode: overlay, overlay, overlay, normal;
+}
+
+/* Home page specific background */
+.home-page-bg {
+  background: 
+    linear-gradient(45deg, transparent 0%, transparent 57%, var(--home-bg1) 100%),
+    linear-gradient(-45deg, var(--home-bg4) 0%, var(--home-bg3) 0.3%, var(--home-bg2) 112%, transparent 11%),
+    linear-gradient(-90deg, var(--home-bg3) 100%, var(--home-bg3) 65%, transparent 20%);
+  background-attachment: fixed;
+}
+
+/* Stream page specific background (default) */
+.stream-page-bg {
+  background: 
+    linear-gradient(45deg, transparent 0%, transparent 57%, var(--bg1) 100%),
+    linear-gradient(-45deg, var(--bg4) 0%, var(--bg3) 0.3%, var(--bg2) 112%, transparent 11%),
+    linear-gradient(-90deg, var(--bg3) 100%, var(--bg3) 65%, transparent 20%);
+  background-attachment: fixed;
 }

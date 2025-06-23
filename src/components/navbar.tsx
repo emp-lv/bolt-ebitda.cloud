@@ -1,12 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Home, User, DollarSign } from 'lucide-react';
+import { Home, User, DollarSign, Settings, Package } from 'lucide-react';
+import { Profile } from '../types/profile'
 
 interface NavbarProps {
-  profileId?: string;
+  profile?: Profile;
+  showEditButton?: boolean;
 }
 
-function Navbar({ profileId }: NavbarProps) {
+function Navbar({ profile, showEditButton = false }: NavbarProps) {
   return (
     <nav className="w-full z-50 bg-black/20 backdrop-blur-sm border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -30,10 +32,30 @@ function Navbar({ profileId }: NavbarProps) {
               <span>Home</span>
             </Link>
             
-            {profileId && (
-              <div className="flex items-center space-x-2 text-green-400">
-                <User className="w-5 h-5" />
-                <span className="font-medium">{profileId}</span>
+            <Link 
+              to="/product" 
+              className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors"
+            >
+              <Package className="w-5 h-5" />
+              <span>Product</span>
+            </Link>
+            
+            {profile && (
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 text-green-400">
+                  <User className="w-5 h-5" />
+                  <span className="font-medium">{profile.name}</span>
+                </div>
+                
+                {showEditButton && (
+                  <Link 
+                    to={`/profile/${profile.id}/edit`}
+                    className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors"
+                  >
+                    <Settings className="w-4 h-4" />
+                    <span>Edit</span>
+                  </Link>
+                )}
               </div>
             )}
           </div>

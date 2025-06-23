@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from "react";
 import styled from "styled-components";
+import { useNavigate } from "react-router-dom";
 import Mrr from "../mrr";
 import { Profile } from "../../types/profile";
 import { SourceItem, DestinationItem } from "../../types/source";
@@ -49,6 +50,7 @@ interface StreamComponentProps {
 
 function StreamComponent({ mrr, profile }: StreamComponentProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const navigate = useNavigate();
   const animationIdRef = useRef<number>();
   const sourceParticlesRef = useRef<Particle[]>([]);
   const destinationParticlesRef = useRef<Particle[]>([]);
@@ -71,25 +73,30 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     // Get all profiles except the current one for sources
     const sourceProfiles = profiles.filter((p) => p.id !== profile.id);
 
-    const yPositions = [
-      height * 0.1,
-      height * 0.2,
-      height * 0.4,
-      height * 0.6,
-      height * 0.9,
-    ];
+    // Calculate evenly spaced Y positions based on source count
+    const getEvenlySpacedPositions = (count: number) => {
+      if (count === 1) return [height * 0.35]; // Sources at 35%
+      if (count === 2) return [height * 0.35, height * 0.65];
+      if (count === 3) return [height * 0.15, height * 0.5, height * 0.85];
+      if (count === 4) return [height * 0.15, height * 0.38, height * 0.62, height * 0.85];
+      // For more than 4, fall back to even distribution
+      const positions = [height * 0.1, height * 0.33, height * 0.67, height * 0.9];
+      return positions.slice(0, count);
+    };
 
     if (sourceProfiles.length <= 4) {
       // No clustering needed - show all as individual circles
+      const yPositions = getEvenlySpacedPositions(sourceProfiles.length);
       return sourceProfiles.map((prof, index) => ({
         type: "single" as const,
         x: width * 0.1,
-        y: yPositions[index] || height * 0.5,
+        y: yPositions[index],
         profiles: [prof],
       }));
     } else {
       // Clustering logic: first 3 as individual, rest as cluster
       const items: SourceItem[] = [];
+      const yPositions = getEvenlySpacedPositions(4); // 3 individual + 1 cluster
 
       // First 3 as individual circles
       for (let i = 0; i < 3; i++) {
@@ -124,19 +131,30 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     // Use different profiles than sources (take from the end)
     const destinationProfiles = availableProfiles.slice(-4); // Take last 4 profiles
 
-    const yPositions = [height * 0.2, height * 0.4, height * 0.6, height * 0.8];
+    // Calculate evenly spaced Y positions based on destination count
+    const getEvenlySpacedPositions = (count: number) => {
+      if (count === 1) return [height * 0.65]; // Destinations at 65%
+      if (count === 2) return [height * 0.35, height * 0.65];
+      if (count === 3) return [height * 0.15, height * 0.5, height * 0.85];
+      if (count === 4) return [height * 0.1, height * 0.33, height * 0.67, height * 0.9];
+      // For more than 4, fall back to even distribution
+      const positions = [height * 0.1, height * 0.33, height * 0.67, height * 0.9];
+      return positions.slice(0, count);
+    };
 
     if (destinationProfiles.length <= 2) {
       // No clustering needed - show all as individual circles
+      const yPositions = getEvenlySpacedPositions(destinationProfiles.length);
       return destinationProfiles.map((prof, index) => ({
         type: "single" as const,
         x: width * 0.9,
-        y: yPositions[index] || height * 0.5,
+        y: yPositions[index],
         profiles: [prof],
       }));
     } else {
       // Clustering logic: first 2 as individual, rest as cluster
       const items: DestinationItem[] = [];
+      const yPositions = getEvenlySpacedPositions(3); // 2 individual + 1 cluster
 
       // First 2 as individual circles
       for (let i = 0; i < 2; i++) {
@@ -521,6 +539,16 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     };
   }, [dimensions]);
 
+  // Handle profile click with navigation
+  const handleProfileClick = (clickedProfile: Profile) => {
+    navigate(`/profile/${clickedProfile.id}`);
+  };
+
+  // Handle edit button click
+  const handleEditClick = () => {
+    navigate(`/profile/${profile.id}/edit`);
+  };
+
   // Handle dragging for circles and clusters
   const handleSourceDrag = (index: number) => (newY: number) => {
     sourcesRef.current[index].y = newY;
@@ -578,6 +606,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             posY={source.y}
             profile={source.profiles[0]}
             onDrag={handleSingleSourceDrag(index)}
+            onClick={() => handleProfileClick(source.profiles[0])}
           />
         ) : (
           <Cluster
@@ -587,6 +616,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             posY={source.y}
             profiles={source.profiles}
             onDrag={handleSourceDrag(index)}
+            onClick={(profile) => handleProfileClick(profile)}
           />
         )
       )}
@@ -610,6 +640,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             posY={destination.y}
             profile={destination.profiles[0]}
             onDrag={handleSingleDestinationDrag(index)}
+            onClick={() => handleProfileClick(destination.profiles[0])}
           />
         ) : (
           <Cluster
@@ -619,6 +650,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             posY={destination.y}
             profiles={destination.profiles}
             onDrag={handleDestinationDrag(index)}
+            onClick={(profile) => handleProfileClick(profile)}
           />
         )
       )}

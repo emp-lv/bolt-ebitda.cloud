@@ -11,6 +11,7 @@ interface ClusterProps {
   posY: number;
   profiles: Profile[];
   onDrag?: (newY: number) => void;
+  onClick?: (profile: Profile) => void;
 }
 
 const CLUSTER_COLORS = {
@@ -18,7 +19,7 @@ const CLUSTER_COLORS = {
   destination: "rgba(255, 198, 99, 0.9)",
 };
 
-function Cluster({ type, posX, posY, profiles, onDrag }: ClusterProps) {
+function Cluster({ type, posX, posY, profiles, onDrag, onClick }: ClusterProps) {
   const isDraggingRef = useRef(false);
   const dragStartYRef = useRef(0);
 
@@ -63,6 +64,17 @@ function Cluster({ type, posX, posY, profiles, onDrag }: ClusterProps) {
     document.addEventListener("mouseup", handleMouseUp);
   };
 
+  const handleProfileClick = (profile: Profile, e: React.MouseEvent) => {
+    if (isDraggingRef.current) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (onClick) {
+      onClick(profile);
+    }
+  };
+
   const tooltipPosition = type === "destination" ? "left" : "right";
 
   return (
@@ -78,14 +90,16 @@ function Cluster({ type, posX, posY, profiles, onDrag }: ClusterProps) {
           <Tooltip
             key={profile.id}
             trigger={
-              <ProfileContainer key={profile.id}>
-                <Link to={`/profile/${profile.id}`}>
-                  <ProfileImage
-                    src={profile.image}
-                    alt={profile.name}
-                    title={profile.name}
-                  />
-                </Link>
+              <ProfileContainer 
+                key={profile.id}
+                onClick={(e) => handleProfileClick(profile, e)}
+                style={{ viewTransitionName: `profile-${profile.id}` }}
+              >
+                <ProfileImage
+                  src={profile.image}
+                  alt={profile.name}
+                  title={profile.name}
+                />
               </ProfileContainer>
             }
             content={<ProfileTooltipContent profile={profile} compact />}
@@ -115,7 +129,7 @@ const ClusterContainer = styled.div<{
   transform: translate(-50%, -50%);
   background: ${(props) => props.$backgroundColor};
   z-index: 5;
-  cursor: ${(props) => (props.$isDragging ? "grabbing" : "grab")};
+  cursor: ${(props) => (props.$isDragging ? "grabbing" : "pointer")};
   padding: 4px;
 
   ${({ $left, $top }) => `
@@ -140,12 +154,7 @@ const ProfileContainer = styled.div`
   position: relative;
   width: 100%;
   height: 100%;
-
-  a {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
+  cursor: pointer;
 `;
 
 const ProfileImage = styled.img`
@@ -154,13 +163,7 @@ const ProfileImage = styled.img`
   object-fit: cover;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.4);
-  transition: transform 0.2s ease, border-color 0.2s ease;
   pointer-events: auto;
-
-  &:hover {
-    transform: scale(1.07);
-    border-color: rgba(255, 255, 255, 0.8);
-  }
 `;
 
 const MoreIndicator = styled.div`

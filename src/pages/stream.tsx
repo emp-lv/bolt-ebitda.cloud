@@ -35,8 +35,8 @@ function Stream() {
   const currentMrr = Math.floor(profile.targetMrr * (0.3 + Math.random() * 0.6));
 
   return (
-    <Container>
-      <Navbar profileId={profile.name} />
+    <Container className="stream-page-bg">
+      <Navbar profile={profile} showEditButton={true} />
       <StreamComponent 
         mrr={Math.floor(currentMrr / 1000)} 
         profile={profile}
@@ -45,12 +45,13 @@ function Stream() {
   );
 }
 
-const Container = styled.div`
+const Container = styled.div<{ className?: string }>`
   position: relative;
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
+  min-height: 100vh;
 `
 
 export default Stream;

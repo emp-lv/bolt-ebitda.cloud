@@ -11,6 +11,8 @@ interface CircleProps {
   posY: number;
   profile: Profile;
   onDrag?: (newY: number) => void;
+  onClick?: () => void;
+  onEditClick?: () => void;
 }
 
 const BACKGROUND_COLORS = {
@@ -19,7 +21,7 @@ const BACKGROUND_COLORS = {
   destination: "rgb(255, 198, 99)",
 };
 
-function Circle({ type, posX, posY, profile, onDrag }: CircleProps) {
+function Circle({ type, posX, posY, profile, onDrag, onClick, onEditClick }: CircleProps) {
   const isDraggingRef = useRef(false);
   const dragStartYRef = useRef(0);
 
@@ -53,6 +55,19 @@ function Circle({ type, posX, posY, profile, onDrag }: CircleProps) {
     document.addEventListener("mouseup", handleMouseUp);
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (isDraggingRef.current) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (type === "profile" && onEditClick) {
+      onEditClick();
+    } else if (onClick) {
+      onClick();
+    }
+  };
+
   if (type === "profile") {
     return (
       <>
@@ -65,12 +80,14 @@ function Circle({ type, posX, posY, profile, onDrag }: CircleProps) {
           $isDragging={isDraggingRef.current}
           $backgroundColor={BACKGROUND_COLORS.profile}
           onMouseDown={handleMouseDown}
+          style={{ viewTransitionName: `profile-${profile.id}` }}
         >
           <Tooltip
             trigger={
-              <Link to={`/profile/${profile.id}`}>
-                <CircleImage src={profile.image} alt={profile.name} />
-              </Link>
+              <CircleImage 
+                src={profile.image} 
+                alt={profile.name}
+              />
             }
             content={<ProfileTooltipContent profile={profile} />}
             position="right"
@@ -88,12 +105,15 @@ function Circle({ type, posX, posY, profile, onDrag }: CircleProps) {
       $isDragging={isDraggingRef.current}
       $backgroundColor={BACKGROUND_COLORS[type]}
       onMouseDown={handleMouseDown}
+      onClick={handleClick}
+      style={{ viewTransitionName: `profile-${profile.id}` }}
     >
       <Tooltip
         trigger={
-          <Link to={`/profile/${profile.id}`}>
-            <CircleImage src={profile.image} alt={profile.name} />
-          </Link>
+          <CircleImage 
+            src={profile.image} 
+            alt={profile.name}
+          />
         }
         content={<ProfileTooltipContent profile={profile} />}
         position={type === "destination" ? "left" : "right"}
@@ -134,7 +154,7 @@ const CircleContainer = styled.div<{
   border-radius: 50%;
   transform: translate(-50%, -50%);
   z-index: 5;
-  cursor: ${(props) => (props.$isDragging ? "grabbing" : "grab")};
+  cursor: ${(props) => (props.$isDragging ? "grabbing" : "pointer")};
   padding: 4px;
 
   ${({ $left, $top, $backgroundColor }) => `
@@ -149,12 +169,7 @@ const CircleImage = styled.img`
   height: 152px;
   object-fit: cover;
   border-radius: 50%;
-  transition: transform 0.2s ease;
   pointer-events: none;
-
-  &:hover {
-    transform: scale(1.04);
-  }
 `;
 
 export default Circle;
