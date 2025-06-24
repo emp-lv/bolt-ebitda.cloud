@@ -1,6 +1,5 @@
 import React, { useRef } from "react";
 import styled from "styled-components";
-import { Link } from "react-router-dom";
 import { Profile } from "../../types/profile";
 import Tooltip from "../tooltip";
 import ProfileTooltipContent from "../profileTooltipContent";
@@ -10,6 +9,7 @@ interface ClusterProps {
   posX: number;
   posY: number;
   profiles: Profile[];
+  size?: number;
   onDrag?: (newY: number) => void;
   onClick?: (profile: Profile) => void;
 }
@@ -19,7 +19,15 @@ const CLUSTER_COLORS = {
   destination: "rgba(255, 198, 99, 0.9)",
 };
 
-function Cluster({ type, posX, posY, profiles, onDrag, onClick }: ClusterProps) {
+function Cluster({
+  type,
+  posX,
+  posY,
+  profiles,
+  size = 160,
+  onDrag,
+  onClick,
+}: ClusterProps) {
   const isDraggingRef = useRef(false);
   const dragStartYRef = useRef(0);
 
@@ -36,12 +44,8 @@ function Cluster({ type, posX, posY, profiles, onDrag, onClick }: ClusterProps) 
   const hasMore = profiles.length > visibleProfiles.length;
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Don't start drag if clicking on a link
-    if ((e.target as HTMLElement).closest("a")) {
-      return;
-    }
-
     e.preventDefault();
+
     isDraggingRef.current = true;
     dragStartYRef.current = e.clientY;
 
@@ -65,11 +69,12 @@ function Cluster({ type, posX, posY, profiles, onDrag, onClick }: ClusterProps) 
   };
 
   const handleProfileClick = (profile: Profile, e: React.MouseEvent) => {
-    if (isDraggingRef.current) return;
-    
     e.preventDefault();
     e.stopPropagation();
-    
+
+    if (isDraggingRef.current) return;
+    if (Math.abs(dragStartYRef.current - e.clientY) > 3) return;
+
     if (onClick) {
       onClick(profile);
     }
@@ -81,6 +86,7 @@ function Cluster({ type, posX, posY, profiles, onDrag, onClick }: ClusterProps) 
     <ClusterContainer
       $left={posX}
       $top={posY}
+      $size={size}
       $isDragging={isDraggingRef.current}
       $backgroundColor={CLUSTER_COLORS[type]}
       onMouseDown={handleMouseDown}
@@ -90,10 +96,10 @@ function Cluster({ type, posX, posY, profiles, onDrag, onClick }: ClusterProps) 
           <Tooltip
             key={profile.id}
             trigger={
-              <ProfileContainer 
+              <ProfileContainer
                 key={profile.id}
                 onClick={(e) => handleProfileClick(profile, e)}
-                style={{ viewTransitionName: `profile-${profile.id}` }}
+                $viewTransitionName={`profile-${profile.id}`}
               >
                 <ProfileImage
                   src={profile.image}
@@ -102,7 +108,7 @@ function Cluster({ type, posX, posY, profiles, onDrag, onClick }: ClusterProps) 
                 />
               </ProfileContainer>
             }
-            content={<ProfileTooltipContent profile={profile} compact />}
+            content={<ProfileTooltipContent profile={profile} />}
             position={tooltipPosition}
           />
         ))}
@@ -119,12 +125,13 @@ function Cluster({ type, posX, posY, profiles, onDrag, onClick }: ClusterProps) 
 const ClusterContainer = styled.div<{
   $left: number;
   $top: number;
+  $size: number;
   $isDragging: boolean;
   $backgroundColor: string;
 }>`
   position: absolute;
-  width: 160px;
-  height: 160px;
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size}px;
   border-radius: 12px;
   transform: translate(-50%, -50%);
   background: ${(props) => props.$backgroundColor};
@@ -150,11 +157,15 @@ const ClusterGrid = styled.div<{
   height: 100%;
 `;
 
-const ProfileContainer = styled.div`
+const ProfileContainer = styled.div<{ $viewTransitionName: string }>`
   position: relative;
   width: 100%;
   height: 100%;
   cursor: pointer;
+
+  ${({ $viewTransitionName }) => `
+    view-transition-name: ${$viewTransitionName};
+  `}
 `;
 
 const ProfileImage = styled.img`

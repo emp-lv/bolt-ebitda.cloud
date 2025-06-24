@@ -26,7 +26,7 @@ interface Particle {
   type: "source" | "destination";
 }
 
-const PARTICLES_PER_SOURCE = 400;
+const PARTICLES_PER_SOURCE = 1000;
 const cubicBezier = (
   t: number,
   p0: number,
@@ -43,23 +43,45 @@ const cubicBezier = (
 };
 
 interface StreamComponentProps {
-  mrr: number;
+  mrr?: number;
   className?: string;
   profile: Profile;
+  size?: number;
+  width?: number;
+  height?: number;
+  profilePositionPercentage?: number;
+  density?: number;
+  hideName?: boolean;
 }
 
-function StreamComponent({ mrr, profile }: StreamComponentProps) {
+function StreamComponent({
+  mrr,
+  profile,
+  size = 160,
+  width = window.innerWidth,
+  height = window.innerHeight,
+  profilePositionPercentage = 0.5,
+  density = 1,
+  hideName = false,
+}: StreamComponentProps) {
+  const dotsPerStream = density * PARTICLES_PER_SOURCE;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
-  const animationIdRef = useRef<number>();
+  const animationIdRef = useRef<number | null>(null);
   const sourceParticlesRef = useRef<Particle[]>([]);
   const destinationParticlesRef = useRef<Particle[]>([]);
-  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [dimensions, setDimensions] = useState({
+    width,
+    height,
+  });
   const mousePositionRef = useRef({ x: 0, y: 0 });
   const timeRef = useRef(0);
   const sourcesRef = useRef<SourceItem[]>([]);
   const destinationsRef = useRef<DestinationItem[]>([]);
-  const userPointRef = useRef({ x: 0, y: 0 });
+  const userPointRef = useRef({
+    x: dimensions.width * 0.5,
+    y: dimensions.height * profilePositionPercentage,
+  });
 
   // State for React circle positions
   const [circlePositions, setCirclePositions] = useState({
@@ -78,9 +100,15 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
       if (count === 1) return [height * 0.35]; // Sources at 35%
       if (count === 2) return [height * 0.35, height * 0.65];
       if (count === 3) return [height * 0.15, height * 0.5, height * 0.85];
-      if (count === 4) return [height * 0.15, height * 0.38, height * 0.62, height * 0.85];
+      if (count === 4)
+        return [height * 0.15, height * 0.38, height * 0.62, height * 0.85];
       // For more than 4, fall back to even distribution
-      const positions = [height * 0.1, height * 0.33, height * 0.67, height * 0.9];
+      const positions = [
+        height * 0.1,
+        height * 0.33,
+        height * 0.67,
+        height * 0.9,
+      ];
       return positions.slice(0, count);
     };
 
@@ -136,9 +164,15 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
       if (count === 1) return [height * 0.65]; // Destinations at 65%
       if (count === 2) return [height * 0.35, height * 0.65];
       if (count === 3) return [height * 0.15, height * 0.5, height * 0.85];
-      if (count === 4) return [height * 0.1, height * 0.33, height * 0.67, height * 0.9];
+      if (count === 4)
+        return [height * 0.1, height * 0.33, height * 0.67, height * 0.9];
       // For more than 4, fall back to even distribution
-      const positions = [height * 0.1, height * 0.33, height * 0.67, height * 0.9];
+      const positions = [
+        height * 0.1,
+        height * 0.33,
+        height * 0.67,
+        height * 0.9,
+      ];
       return positions.slice(0, count);
     };
 
@@ -186,20 +220,25 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
   // Update dimensions on resize
   useEffect(() => {
     const updateDimensions = () => {
-      // Account for navbar height (64px = h-16 in Tailwind)
-      const navbarHeight = 64;
-      const width = window.innerWidth;
-      const height = window.innerHeight - navbarHeight;
-      setDimensions({
-        width,
-        height,
+      setDimensions((dimensions) => {
+        const newDimensions: Partial<typeof dimensions> = {};
+        if (width == null) {
+          newDimensions.width = window.innerWidth;
+        }
+        if (height == null) {
+          newDimensions.height = window.innerHeight;
+        }
+        return {
+          width: newDimensions.width ?? dimensions.width,
+          height: newDimensions.height ?? dimensions.height,
+        };
       });
 
       const newSources = createSourceItems(width, height);
       const newDestinations = createDestinationItems(width, height);
       const newUser = {
         x: width * 0.5,
-        y: height * 0.5,
+        y: height * profilePositionPercentage,
       };
 
       sourcesRef.current = newSources;
@@ -217,7 +256,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     updateDimensions();
     window.addEventListener("resize", updateDimensions);
     return () => window.removeEventListener("resize", updateDimensions);
-  }, [profile.id]);
+  }, [profile.id, width, height]);
 
   // Canvas setup and animation
   useEffect(() => {
@@ -229,12 +268,13 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
 
     canvas.width = dimensions.width;
     canvas.height = dimensions.height;
+    const { left, top } = canvas.getBoundingClientRect();
 
     // Track mouse position directly in ref (no React state)
     const handleMouseMove = (event: MouseEvent) => {
       mousePositionRef.current = {
-        x: event.clientX,
-        y: event.clientY,
+        x: event.clientX - left,
+        y: event.clientY - top,
       };
     };
 
@@ -278,8 +318,8 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     const getParticleSize = () => {
       const sizeRandomValue = Math.random();
       return (
-        0.5 +
-        sizeRandomValue * (sizeRandomValue > 0.9 ? Math.random() * 5 : 1.5)
+        1.4 +
+        sizeRandomValue * (sizeRandomValue > 0.9 ? Math.random() * 5 : 2.5)
       );
     };
 
@@ -297,14 +337,14 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
     };
 
     const getParticleSignSize = (size: number) => {
-      return 5 + Math.random() * 8 + size;
+      return 10 + Math.random() * 20 + size;
     };
 
     // Generate speed based on category with more variation
     const generateSpeed = (category: "slow" | "medium" | "fast") => {
       switch (category) {
         case "slow":
-          return 0.0002 + Math.random() * 0.0003; // Very slow particles
+          return 0.0003 + Math.random() * 0.0003; // Very slow particles
         case "medium":
           return 0.0005 + Math.random() * 0.0005; // Medium speed particles
         case "fast":
@@ -322,7 +362,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
       const destinationsCount = destinationsRef.current.length;
       for (
         let i = 0;
-        i < PARTICLES_PER_SOURCE * (sourcesCount + destinationsCount);
+        i < dotsPerStream * (sourcesCount + destinationsCount);
         i++
       ) {
         // Distribute speed categories: 40% slow, 40% medium, 20% fast
@@ -338,7 +378,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
 
         const speed = generateSpeed(speedCategory);
         const size = getParticleSize();
-        const index = Math.floor(i / PARTICLES_PER_SOURCE);
+        const index = Math.floor(i / dotsPerStream);
         const idx = index < sourcesCount ? index : index - sourcesCount;
         const type = index < sourcesCount ? "source" : "destination";
         const start =
@@ -356,7 +396,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
           speedCategory: speedCategory,
           sign: getParticleSign(),
           signSize: getParticleSignSize(size),
-          isCent: Math.random() < 0.35,
+          isCent: Math.random() < 0.5,
           idx,
           type,
         });
@@ -541,12 +581,11 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
 
   // Handle profile click with navigation
   const handleProfileClick = (clickedProfile: Profile) => {
-    navigate(`/profile/${clickedProfile.id}`);
-  };
-
-  // Handle edit button click
-  const handleEditClick = () => {
-    navigate(`/profile/${profile.id}/edit`);
+    navigate(`/profile/${clickedProfile.id}`, {
+      state: {
+        viewTransition: true,
+      },
+    });
   };
 
   // Handle dragging for circles and clusters
@@ -605,8 +644,10 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             posX={source.x}
             posY={source.y}
             profile={source.profiles[0]}
+            size={size}
             onDrag={handleSingleSourceDrag(index)}
             onClick={() => handleProfileClick(source.profiles[0])}
+            viewTransitionName={`profile-${source.profiles[0].id}`}
           />
         ) : (
           <Cluster
@@ -614,6 +655,7 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             type="source"
             posX={source.x}
             posY={source.y}
+            size={size}
             profiles={source.profiles}
             onDrag={handleSourceDrag(index)}
             onClick={(profile) => handleProfileClick(profile)}
@@ -622,13 +664,18 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
       )}
 
       {/* User Circle with Image */}
-      <Circle
-        type="profile"
-        posX={circlePositions.user.x}
-        posY={circlePositions.user.y}
-        profile={profile}
-        onDrag={handleProfileDrag}
-      />
+      {userPointRef.current.x && userPointRef.current.y && profile ? (
+        <Circle
+          type="profile"
+          posX={circlePositions.user.x}
+          posY={circlePositions.user.y}
+          profile={profile}
+          size={size}
+          onDrag={handleProfileDrag}
+          viewTransitionName={`profile-${profile.id}`}
+          hideName={hideName}
+        />
+      ) : null}
 
       {/* Destination Circles and Clusters */}
       {circlePositions.destinations.map((destination, index) =>
@@ -639,8 +686,10 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             posX={destination.x}
             posY={destination.y}
             profile={destination.profiles[0]}
+            size={size}
             onDrag={handleSingleDestinationDrag(index)}
             onClick={() => handleProfileClick(destination.profiles[0])}
+            viewTransitionName={`profile-${destination.profiles[0].id}`}
           />
         ) : (
           <Cluster
@@ -649,13 +698,16 @@ function StreamComponent({ mrr, profile }: StreamComponentProps) {
             posX={destination.x}
             posY={destination.y}
             profiles={destination.profiles}
+            size={size}
             onDrag={handleDestinationDrag(index)}
             onClick={(profile) => handleProfileClick(profile)}
           />
         )
       )}
 
-      <Mrr value={mrr} position="absolute" bottom="0" left="50%" />
+      {mrr != null && (
+        <Mrr value={mrr} position="absolute" bottom="0" left="50%" />
+      )}
     </StreamContainer>
   );
 }

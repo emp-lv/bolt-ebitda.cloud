@@ -1,9 +1,9 @@
 import React, { useRef } from "react";
 import styled from "styled-components";
-import { Link } from "react-router-dom";
 import { Profile } from "../../types/profile";
 import Tooltip from "../tooltip";
 import ProfileTooltipContent from "../profileTooltipContent";
+import { Link } from "react-router-dom";
 
 interface CircleProps {
   type: "source" | "profile" | "destination";
@@ -13,6 +13,9 @@ interface CircleProps {
   onDrag?: (newY: number) => void;
   onClick?: () => void;
   onEditClick?: () => void;
+  size?: number;
+  viewTransitionName?: string;
+  hideName?: boolean;
 }
 
 const BACKGROUND_COLORS = {
@@ -21,18 +24,25 @@ const BACKGROUND_COLORS = {
   destination: "rgb(255, 198, 99)",
 };
 
-function Circle({ type, posX, posY, profile, onDrag, onClick, onEditClick }: CircleProps) {
+function Circle({
+  type,
+  posX,
+  posY,
+  profile,
+  size = 160,
+  onDrag,
+  onClick,
+  onEditClick,
+  viewTransitionName,
+  hideName = false,
+}: CircleProps) {
   const isDraggingRef = useRef(false);
   const dragStartYRef = useRef(0);
 
   // Handle dragging
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Don't start drag if clicking on a link
-    if ((e.target as HTMLElement).closest("a")) {
-      return;
-    }
-
     e.preventDefault();
+
     isDraggingRef.current = true;
     dragStartYRef.current = e.clientY;
 
@@ -56,11 +66,12 @@ function Circle({ type, posX, posY, profile, onDrag, onClick, onEditClick }: Cir
   };
 
   const handleClick = (e: React.MouseEvent) => {
-    if (isDraggingRef.current) return;
-    
     e.preventDefault();
     e.stopPropagation();
-    
+
+    if (isDraggingRef.current) return;
+    if (Math.abs(dragStartYRef.current - e.clientY) > 3) return;
+
     if (type === "profile" && onEditClick) {
       onEditClick();
     } else if (onClick) {
@@ -70,22 +81,22 @@ function Circle({ type, posX, posY, profile, onDrag, onClick, onEditClick }: Cir
 
   if (type === "profile") {
     return (
-      <>
-        <ProfileName $left={posX} $top={posY - 100}>
-          {profile.name}
-        </ProfileName>
+      <CenterProfileContainer $left={posX} $top={posY} $size={size}>
+        {hideName ? null : <ProfileName>{profile.name}</ProfileName>}
         <CircleContainer
-          $left={posX}
-          $top={posY}
+          to={`/profile/${profile.id}`}
+          viewTransition
+          $size={size}
           $isDragging={isDraggingRef.current}
           $backgroundColor={BACKGROUND_COLORS.profile}
           onMouseDown={handleMouseDown}
-          style={{ viewTransitionName: `profile-${profile.id}` }}
+          $viewTransitionName={viewTransitionName}
         >
           <Tooltip
             trigger={
-              <CircleImage 
-                src={profile.image} 
+              <CircleImage
+                $size={size}
+                src={profile.image}
                 alt={profile.name}
               />
             }
@@ -93,15 +104,18 @@ function Circle({ type, posX, posY, profile, onDrag, onClick, onEditClick }: Cir
             position="right"
           />
         </CircleContainer>
-      </>
+      </CenterProfileContainer>
     );
   }
 
   // For source and destination circles, show profile image with tooltip
   return (
     <CircleContainer
+      to={`/profile/${profile.id}`}
+      viewTransition
       $left={posX}
       $top={posY}
+      $size={size}
       $isDragging={isDraggingRef.current}
       $backgroundColor={BACKGROUND_COLORS[type]}
       onMouseDown={handleMouseDown}
@@ -110,10 +124,7 @@ function Circle({ type, posX, posY, profile, onDrag, onClick, onEditClick }: Cir
     >
       <Tooltip
         trigger={
-          <CircleImage 
-            src={profile.image} 
-            alt={profile.name}
-          />
+          <CircleImage $size={size} src={profile.image} alt={profile.name} />
         }
         content={<ProfileTooltipContent profile={profile} />}
         position={type === "destination" ? "left" : "right"}
@@ -122,12 +133,25 @@ function Circle({ type, posX, posY, profile, onDrag, onClick, onEditClick }: Cir
   );
 }
 
-const ProfileName = styled.div<{
+const CenterProfileContainer = styled.div<{
   $left: number;
   $top: number;
+  $size: number;
 }>`
+  position: relative;
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size}px;
+  transform: translate(-50%, -50%);
+  ${({ $left, $top }) => `
+    left: ${$left}px;
+    top: ${$top}px;
+  `}
+`;
+
+const ProfileName = styled.div`
+  width: 100%;
   position: absolute;
-  transform: translateX(-50%);
+  transform: translate(-50%, -64px);
   font-size: 2.5rem;
   font-weight: bold;
   color: white;
@@ -136,37 +160,37 @@ const ProfileName = styled.div<{
   z-index: 10;
   text-align: center;
   white-space: nowrap;
-  ${({ $left, $top }) => `
-    left: ${$left}px;
-    top: ${$top}px;
-  `}
 `;
 
-const CircleContainer = styled.div<{
-  $left: number;
-  $top: number;
+// const CircleContainer = styled.div<{
+const CircleContainer = styled(Link)<{
+  $left?: number;
+  $top?: number;
   $backgroundColor: string;
   $isDragging?: boolean;
+  $size: number;
+  $viewTransitionName?: string;
 }>`
   position: absolute;
-  width: 160px;
-  height: 160px;
+  display: block;
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size}px;
   border-radius: 50%;
-  transform: translate(-50%, -50%);
   z-index: 5;
   cursor: ${(props) => (props.$isDragging ? "grabbing" : "pointer")};
   padding: 4px;
 
   ${({ $left, $top, $backgroundColor }) => `
-    left: ${$left}px;
-    top: ${$top}px;
+    ${$left ? `left: ${$left}px;` : ""}
+    ${$top ? `top: ${$top}px;` : ""}
+    ${$left && $top ? `transform: translate(-50%, -50%);` : ""}
     background-color: ${$backgroundColor};
   `}
 `;
 
-const CircleImage = styled.img`
-  width: 152px;
-  height: 152px;
+const CircleImage = styled.img<{ $size: number }>`
+  width: ${({ $size }) => $size - 8}px;
+  height: ${({ $size }) => $size - 8}px;
   object-fit: cover;
   border-radius: 50%;
   pointer-events: none;

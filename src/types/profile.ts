@@ -5,6 +5,7 @@ export type CompanyType = 'SaaS' | 'Agency' | 'Retail' | 'Royalties' | 'Newslett
 export interface Profile {
   id: string; // UUIDv4
   name: string;
+  email?: string;
   createdAt: number; // timestamp
   image: string;
   description: string;

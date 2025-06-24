@@ -62,7 +62,8 @@ const MRRLabel = styled.div`
     -0.03em 0 0 rgba(0, 0, 0, 1);
 `;
 
-const MRRText = styled.div`
+export const MRRText = styled.div`
+  font-family: "Luckiest Guy", cursive;
   font-size: 8em;
   padding: 32px 32px 0;
   color: rgb(191, 255, 180);
