@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { User, Building2, Clock, CheckCircle, DollarSign, Eye, EyeOff } from 'lucide-react';
 import { Connection } from '../types/connection';
 import { Profile } from '../types/profile';
-import { getProfileById } from '../data/profiles';
+import { useProfilesStore } from '../store/profilesStore';
+import { useUserProfilesStore } from '../store/userProfilesStore';
 
 interface ConnectionCardProps {
   connection: Connection;
@@ -12,9 +13,12 @@ interface ConnectionCardProps {
 }
 
 function ConnectionCard({ connection, currentProfileId, type }: ConnectionCardProps) {
+  const { getProfileById: getGlobalProfile } = useProfilesStore();
+  const { getProfileById: getUserProfile } = useUserProfilesStore();
+  
   const isSource = type === 'source';
   const otherProfileId = isSource ? connection.sourceProfileId : connection.destinationProfileId;
-  const otherProfile = getProfileById(otherProfileId);
+  const otherProfile = getUserProfile(otherProfileId) || getGlobalProfile(otherProfileId);
   
   if (!otherProfile) return null;
 

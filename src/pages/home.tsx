@@ -3,22 +3,23 @@ import { ArrowRight } from "lucide-react";
 import Navbar from "../components/navbar";
 import Footer from "../components/footer";
 import ProfileCard from "../components/profileCard";
-import { profiles } from "../data/profiles";
+import { useProfilesStore } from "../store/profilesStore";
 import StreamComponent from "../components/stream/stream";
 import { Link } from "react-router-dom";
 import { MRRText } from "../components/mrr";
 import styled from "styled-components";
 
 function Home() {
-  const featuredProfiles = profiles.slice(0, 3);
+  const { getFeaturedProfiles, getPublicProfiles } = useProfilesStore();
+  const featuredProfiles = getFeaturedProfiles().slice(0, 3);
 
   return (
-    <div className="min-h-screen relative home-page-bg">
+    <div className="min-h-screen relative">
       <Navbar />
-      <div className="pt-16 px-4 sm:px-6 lg:px-8">
+      <div className="px-4 sm:px-6 lg:px-8">
         <div className="max-w-10xl mx-auto">
           {/* Hero Section */}
-          <div className="text-center py-16 relative h-[928px]">
+          <div className="text-center py-8 relative h-[928px]">
             <h1 className="text-6xl font-bold text-white mb-10 mt-16">
               <StyledMRRText>
                 <span>Transparent</span>
@@ -73,37 +74,39 @@ function Home() {
       </div>
 
       {/* Featured revenue streams */}
-      <div className="px-4 sm:px-6 lg:px-8 py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-5xl font-bold text-gray-900 mb-6">
-              Featured Revenue Streams
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              See how successful entrepreneurs and businesses use My Earnings to
-              track and optimize their income sources
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            {featuredProfiles.map((profile) => (
-              <div
-                key={profile.id}
-                className="transform hover:scale-105 transition-transform duration-300"
+      <div className="bg-dark-gradient">
+        <div className="px-4 sm:px-6 lg:px-8 py-20 bg-noise">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-5xl font-bold text-gray-900 mb-6">
+                Featured Revenue Streams
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                See how successful entrepreneurs and businesses use My Earnings to
+                track and optimize their income sources
+              </p>
+            </div>
+  
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              {featuredProfiles.map((profile) => (
+                <div
+                  key={profile.id}
+                  className="transform hover:scale-105 transition-transform duration-300"
+                >
+                  <ProfileCard profile={profile} />
+                </div>
+              ))}
+            </div>
+  
+            <div className="text-center">
+              <Link
+                to="/featured"
+                className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-semibold text-lg transition-colors"
               >
-                <ProfileCard profile={profile} />
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link
-              to="/featured"
-              className="inline-flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-semibold text-lg transition-colors"
-            >
-              <span>Explore All Revenue Streams</span>
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+                <span>Explore All Revenue Streams</span>
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -117,6 +120,7 @@ function Home() {
 function MiniStreamWrapper() {
   const streamContainerRef = useRef<HTMLDivElement>(null);
   const [streamWidth, setStreamWidth] = useState(1280);
+  const { getPublicProfiles } = useProfilesStore();
 
   useEffect(() => {
     function handleResize() {
@@ -137,7 +141,7 @@ function MiniStreamWrapper() {
       {streamContainerRef.current && (
         <StreamComponent
           key={streamWidth.toString()}
-          profile={profiles[0]}
+          profile={getPublicProfiles()[0]}
           size={120}
           width={streamWidth}
           height={800}

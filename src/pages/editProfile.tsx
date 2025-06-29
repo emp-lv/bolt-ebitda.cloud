@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Save,
@@ -12,31 +12,45 @@ import {
   ArrowRight,
   ArrowLeft as ArrowLeftIcon,
   HelpCircle,
+  ChevronDown,
+  Settings,
 } from "lucide-react";
 import Navbar from "../components/navbar";
 import ConnectionCard from "../components/connectionCard";
 import ProfileSearch from "../components/profileSearch";
 import ConnectionEditModal from "../components/connectionEditModal";
 import AddConnectionModal from "../components/addConnectionModal";
-import { useStore } from "../store/useStore";
+import { useUserProfilesStore } from "../store/userProfilesStore";
+import { useProfilesStore } from "../store/profilesStore";
+import { useAuth } from "../hooks/useAuth";
 import { Profile, CompanyType } from "../types/profile";
 import { ConnectionType } from "../types/connection";
+import { useEffect } from "react";
 
 function EditProfile() {
   const { profileId } = useParams<{ profileId: string }>();
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
   const {
-    getProfileById,
+    getProfileById: getUserProfile,
     updateProfile,
     getSourceConnections,
     getDestinationConnections,
     addConnection,
     updateConnection,
     deleteConnection,
-    profiles,
-  } = useStore();
+    userProfiles,
+  } = useUserProfilesStore();
+  
+  const { getProfileById: getGlobalProfile } = useProfilesStore();
+  
+  // Get the profile from user profiles first, then from global profiles
+  const userOwnedProfile = profileId ? getUserProfile(profileId) : null;
+  const globalProfile = profileId ? getGlobalProfile(profileId) : null;
+  const profile = userOwnedProfile || globalProfile;
 
-  const profile = (profileId && getProfileById(profileId)) || null;
   const [editedProfile, setEditedProfile] = useState<Profile | null>(profile);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [editingConnection, setEditingConnection] = useState<{
     connection: any;
     type: "source" | "destination";
@@ -47,24 +61,55 @@ function EditProfile() {
     type: "source" | "destination";
   } | null>(null);
 
+  // Validate ownership and authentication
+  useEffect(() => {
+    // Redirect if not authenticated
+    if (!isAuthenticated) {
+      navigate('/signin', { replace: true });
+      return;
+    }
+    
+    // Redirect if profile doesn't exist
+    if (!profile) {
+      navigate('/', { replace: true });
+      return;
+    }
+    
+    // Redirect if profile is not owned by the user
+    if (!userOwnedProfile) {
+      navigate(`/profile/${profileId}`, { replace: true });
+      return;
+    }
+  }, [isAuthenticated, profile, userOwnedProfile, profileId, navigate]);
+
+  // Get user's profiles (for demo, we'll show all profiles as if they belong to the user)
+  const allUserProfiles = userProfiles;
   if (!profile || !editedProfile) {
     return (
-      <div className="min-h-screen relative">
+      <div className="min-h-screen relative home-page-bg">
         <Navbar />
-        <div className="flex items-center justify-center h-screen">
+        <div className="flex flex-col items-center justify-center h-screen">
           <div className="text-center">
             <h1 className="text-4xl font-bold text-white mb-4">
-              Profile Not Found
+              {!isAuthenticated 
+                ? "Please Sign In" 
+                : !profile 
+                  ? "Profile Not Found" 
+                  : "You don't have permission to edit this profile"}
             </h1>
             <p className="text-white/80 mb-8">
-              The profile you're trying to edit doesn't exist.
+              {!isAuthenticated 
+                ? "You need to be signed in to edit profiles." 
+                : !profile 
+                  ? "The profile you're trying to edit doesn't exist." 
+                  : "You can only edit profiles that belong to you."}
             </p>
             <Link
-              to="/"
+              to={!isAuthenticated ? "/signin" : "/"}
               className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Home</span>
+              <span>{!isAuthenticated ? "Sign In" : "Back to Home"}</span>
             </Link>
           </div>
         </div>
@@ -108,7 +153,7 @@ function EditProfile() {
       type === "source"
         ? connection.sourceProfileId
         : connection.destinationProfileId;
-    const otherProfile = getProfileById(otherProfileId);
+    const otherProfile = getUserProfile(otherProfileId) || getGlobalProfile(otherProfileId);
     if (otherProfile) {
       setEditingConnection({
         connection,
@@ -160,7 +205,7 @@ function EditProfile() {
   ];
 
   return (
-    <div className="min-h-screen relative edit-page-bg">
+    <div className="min-h-screen relative home-page-bg">
       <Navbar profile={profile} />
 
       <div className="pt-16 px-4 sm:px-6 lg:px-8">
@@ -179,13 +224,108 @@ function EditProfile() {
               <h1 className="text-3xl font-bold text-white">Edit Profile</h1>
             </div>
 
-            <button
-              onClick={handleSave}
-              className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors"
-            >
-              <Save className="w-4 h-4" />
-              <span>Save Changes</span>
-            </button>
+            <div className="flex items-center space-x-4">
+              <Link
+                to="/settings"
+                className="flex items-center space-x-2 text-white/80 hover:text-white transition-colors"
+              >
+                <Settings className="w-4 h-4" />
+                <span>User Settings</span>
+              </Link>
+              <button
+                onClick={handleSave}
+                className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save Changes</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Profile Switcher */}
+          <div className="mb-8">
+            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 border border-white/10">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-white mb-2">Current Profile</h2>
+                  <p className="text-white/60">Switch between your profiles to edit different businesses or personal accounts</p>
+                </div>
+                
+                <div className="relative">
+                  <button
+                    onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                    className="flex items-center space-x-3 bg-white/10 hover:bg-white/20 text-white px-4 py-3 rounded-lg transition-colors border border-white/20"
+                  >
+                    <img 
+                      src={profile.image} 
+                      alt={profile.name}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                    <div className="text-left">
+                      <div className="font-medium">{profile.name}</div>
+                      <div className="text-xs text-white/60">{profile.type === 'person' ? 'Personal' : 'Company'}</div>
+                    </div>
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+
+                  {showProfileDropdown && (
+                    <>
+                      <div 
+                        className="fixed inset-0 z-10" 
+                        onClick={() => setShowProfileDropdown(false)}
+                      />
+                      <div className="absolute top-full right-0 mt-2 w-80 bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg shadow-xl z-50 max-h-64 overflow-y-auto">
+                        <div className="p-2">
+                          {allUserProfiles.map((userProfile) => (
+                            <Link
+                              key={userProfile.id}
+                              to={`/profile/${userProfile.id}/edit`}
+                              onClick={() => setShowProfileDropdown(false)}
+                              className={`flex items-center space-x-3 p-3 hover:bg-white/10 rounded-lg transition-colors ${
+                                userProfile.id === profile.id ? 'bg-white/10 border border-white/20' : ''
+                              }`}
+                            >
+                              <img 
+                                src={userProfile.image} 
+                                alt={userProfile.name}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-2">
+                                  {userProfile.type === 'person' ? (
+                                    <User className="w-4 h-4 text-blue-400" />
+                                  ) : (
+                                    <Building2 className="w-4 h-4 text-purple-400" />
+                                  )}
+                                  <span className="text-white font-medium truncate">
+                                    {userProfile.name}
+                                  </span>
+                                  {userProfile.id === profile.id && (
+                                    <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full">
+                                      Current
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-white/60 text-sm truncate">
+                                  {userProfile.description}
+                                </p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                        
+                        <div className="border-t border-white/10 p-2">
+                          <button className="w-full flex items-center space-x-2 p-3 hover:bg-white/10 rounded-lg transition-colors text-blue-400">
+                            <Plus className="w-4 h-4" />
+                            <span>Create New Profile</span>
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Profile Details Section */}

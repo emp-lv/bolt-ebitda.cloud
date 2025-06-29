@@ -5,11 +5,15 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/navbar";
 import StreamComponent from "../components/stream/stream";
-import { getProfileById } from "../data/profiles";
+import { useProfilesStore } from "../store/profilesStore";
+import { useUserProfilesStore } from "../store/userProfilesStore";
 
 function Stream() {
   const { profileId } = useParams<{ profileId: string }>();
-  const profile = profileId ? getProfileById(profileId) : null;
+  const { getProfileById: getGlobalProfile } = useProfilesStore();
+  const { getProfileById: getUserProfile } = useUserProfilesStore();
+  
+  const profile = profileId ? (getUserProfile(profileId) || getGlobalProfile(profileId)) : null;
 
   if (!profile) {
     return (
@@ -37,14 +41,16 @@ function Stream() {
   }
 
   return (
-    <Container className="stream-page-bg">
+    <Container>
       <Navbar profile={profile} showEditButton={true} />
+      <div className="pt-16"> {/* Add padding for floating navbar */}
       <StreamComponent
         mrr={
           profile.currentMrr ? Math.floor(profile.currentMrr / 1000) : undefined
         }
         profile={profile}
       />
+      </div>
     </Container>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Search, Plus, User, Building2 } from 'lucide-react';
 import { Profile } from '../types/profile';
-import { useStore } from '../store/useStore';
+import { useProfilesStore } from '../store/profilesStore';
+import { useUserProfilesStore } from '../store/userProfilesStore';
 
 interface ProfileSearchProps {
   currentProfileId: string;
@@ -13,7 +14,8 @@ interface ProfileSearchProps {
 function ProfileSearch({ currentProfileId, onConnect, excludeProfiles = [], placeholder = "Search profiles to connect..." }: ProfileSearchProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const { profiles, getSourceConnections, getDestinationConnections } = useStore();
+  const { searchProfiles } = useProfilesStore();
+  const { getSourceConnections, getDestinationConnections } = useUserProfilesStore();
 
   // Get all connected profile IDs to exclude them from search
   const sourceConnections = getSourceConnections(currentProfileId);
@@ -24,10 +26,8 @@ function ProfileSearch({ currentProfileId, onConnect, excludeProfiles = [], plac
     ...excludeProfiles
   ];
 
-  const availableProfiles = profiles.filter(profile => 
-    profile.id !== currentProfileId && 
-    !connectedProfileIds.includes(profile.id) &&
-    profile.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const availableProfiles = searchProfiles(searchTerm).filter(profile => 
+    profile.id !== currentProfileId && !connectedProfileIds.includes(profile.id)
   );
 
   const handleConnect = (profile: Profile) => {
