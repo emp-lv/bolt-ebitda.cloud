@@ -4,9 +4,10 @@ import { useNavigate } from "react-router-dom";
 import Mrr from "../mrr";
 import { Profile } from "../../types/profile";
 import { SourceItem, DestinationItem } from "../../types/source";
-import { profiles } from "../../data/profiles";
 import Circle from "./circle";
 import Cluster from "./cluster";
+import { useProfilesStore } from "../../store/profilesStore";
+import { useUserProfilesStore } from "../../store/userProfilesStore";
 
 interface Particle {
   x: number;
@@ -26,7 +27,7 @@ interface Particle {
   type: "source" | "destination";
 }
 
-const PARTICLES_PER_SOURCE = 1000;
+const PARTICLES_PER_SOURCE = 500;
 const cubicBezier = (
   t: number,
   p0: number,
@@ -61,10 +62,10 @@ function StreamComponent({
   width = window.innerWidth,
   height = window.innerHeight,
   profilePositionPercentage = 0.5,
-  density = 1,
+  density = PARTICLES_PER_SOURCE,
   hideName = false,
 }: StreamComponentProps) {
-  const dotsPerStream = density * PARTICLES_PER_SOURCE;
+  const dotsPerStream = density;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const navigate = useNavigate();
   const animationIdRef = useRef<number | null>(null);
@@ -83,20 +84,96 @@ function StreamComponent({
     y: dimensions.height * profilePositionPercentage,
   });
 
+  // Zustand store hooks
+  const {
+    getProfileById: getGlobalProfile,
+    getSourceConnections: getGlobalSourceConnections,
+    getDestinationConnections: getGlobalDestinationConnections,
+  } = useProfilesStore();
+  const {
+    getProfileById: getUserProfile,
+    getSourceConnections: getUserSourceConnections,
+    getDestinationConnections: getUserDestinationConnections,
+  } = useUserProfilesStore();
+
+  // Helper function to get profile from either store
+  const getProfileById = (profileId: string): Profile | undefined => {
+    const userProfile = getUserProfile(profileId);
+    const globalProfile = getGlobalProfile(profileId);
+    // @ts-expect-error - UserProfile extends Profile so this is safe
+    return userProfile || globalProfile;
+  };
+
+  // Helper function to get connections from both stores
+  const getConnectionsForProfile = () => {
+    const globalSourceConnections = getGlobalSourceConnections(profile.id);
+    const globalDestinationConnections = getGlobalDestinationConnections(
+      profile.id
+    );
+    const userSourceConnections = getUserSourceConnections(profile.id);
+    const userDestinationConnections = getUserDestinationConnections(
+      profile.id
+    );
+
+    return {
+      sourceConnections: [
+        ...globalSourceConnections,
+        ...userSourceConnections,
+      ].filter((conn) => conn.status === "approved"),
+      destinationConnections: [
+        ...globalDestinationConnections,
+        ...userDestinationConnections,
+      ].filter((conn) => conn.status === "approved"),
+    };
+  };
+
   // State for React circle positions
   const [circlePositions, setCirclePositions] = useState({
     sources: [] as SourceItem[],
     destinations: [] as DestinationItem[],
-    user: { x: 0, y: 0 },
+    user: { x: width * 0.5, y: height * profilePositionPercentage },
   });
 
   // Clustering logic
   const createSourceItems = (width: number, height: number): SourceItem[] => {
-    // Get all profiles except the current one for sources
-    const sourceProfiles = profiles.filter((p) => p.id !== profile.id);
+    // Get connections where this profile is the destination (money flowing IN from sources)
+    const { sourceConnections } = getConnectionsForProfile();
 
-    // Calculate evenly spaced Y positions based on source count
+    // Get the actual source profiles from connections
+    const sourceProfiles = sourceConnections
+      .map((conn) => getProfileById(conn.sourceProfileId))
+      .filter((prof): prof is Profile => prof !== undefined);
+
+    // Calculate total net from actual connections
+    const totalConnectedNet = sourceConnections.reduce(
+      (sum, conn) => sum + conn.net,
+      0
+    );
+    const currentMrr = profile.currentMrr || 0;
+
+    // Create array of all profiles including potential "other" source
+    const allSourceProfiles = [...sourceProfiles];
+
+    // If connected sources don't account for all current MRR, add placeholder "other" source
+    if (totalConnectedNet < currentMrr && currentMrr > 0) {
+      const otherAmount = currentMrr - totalConnectedNet;
+      const otherProfile: Profile = {
+        id: `other-${profile.id}`,
+        name: "Other",
+        createdAt: Date.now(),
+        image: "https://cdn.worldvectorlogo.com/logos/incognito-1.svg",
+        description: `Other revenue sources ($${otherAmount.toLocaleString()})`,
+        targetMrr: otherAmount,
+        currentMrr: otherAmount,
+        type: "company",
+        companyType: "Other",
+      };
+      allSourceProfiles.push(otherProfile);
+    }
+
+    // Calculate evenly spaced Y positions based on total source count
     const getEvenlySpacedPositions = (count: number) => {
+      if (count === 0) return [];
       if (count === 1) return [height * 0.35]; // Sources at 35%
       if (count === 2) return [height * 0.35, height * 0.65];
       if (count === 3) return [height * 0.15, height * 0.5, height * 0.85];
@@ -112,10 +189,14 @@ function StreamComponent({
       return positions.slice(0, count);
     };
 
-    if (sourceProfiles.length <= 4) {
+    if (allSourceProfiles.length === 0) {
+      return [];
+    }
+
+    if (allSourceProfiles.length <= 4) {
       // No clustering needed - show all as individual circles
-      const yPositions = getEvenlySpacedPositions(sourceProfiles.length);
-      return sourceProfiles.map((prof, index) => ({
+      const yPositions = getEvenlySpacedPositions(allSourceProfiles.length);
+      return allSourceProfiles.map((prof, index) => ({
         type: "single" as const,
         x: width * 0.1,
         y: yPositions[index],
@@ -132,12 +213,12 @@ function StreamComponent({
           type: "single",
           x: width * 0.1,
           y: yPositions[i],
-          profiles: [sourceProfiles[i]],
+          profiles: [allSourceProfiles[i]],
         });
       }
 
       // Remaining profiles as cluster
-      const clusterProfiles = sourceProfiles.slice(3);
+      const clusterProfiles = allSourceProfiles.slice(3);
       items.push({
         type: "cluster",
         x: width * 0.1,
@@ -154,13 +235,17 @@ function StreamComponent({
     width: number,
     height: number
   ): DestinationItem[] => {
-    // Get all profiles except the current one for destinations
-    const availableProfiles = profiles.filter((p) => p.id !== profile.id);
-    // Use different profiles than sources (take from the end)
-    const destinationProfiles = availableProfiles.slice(-4); // Take last 4 profiles
+    // Get connections where this profile is the source (money flowing OUT to destinations)
+    const { destinationConnections } = getConnectionsForProfile();
+
+    // Get the actual destination profiles from connections
+    const destinationProfiles = destinationConnections
+      .map((conn) => getProfileById(conn.destinationProfileId))
+      .filter((prof): prof is Profile => prof !== undefined);
 
     // Calculate evenly spaced Y positions based on destination count
     const getEvenlySpacedPositions = (count: number) => {
+      if (count === 0) return [];
       if (count === 1) return [height * 0.65]; // Destinations at 65%
       if (count === 2) return [height * 0.35, height * 0.65];
       if (count === 3) return [height * 0.15, height * 0.5, height * 0.85];
@@ -175,6 +260,10 @@ function StreamComponent({
       ];
       return positions.slice(0, count);
     };
+
+    if (destinationProfiles.length === 0) {
+      return [];
+    }
 
     if (destinationProfiles.length <= 2) {
       // No clustering needed - show all as individual circles
@@ -268,13 +357,13 @@ function StreamComponent({
 
     canvas.width = dimensions.width;
     canvas.height = dimensions.height;
-    const { left, top } = canvas.getBoundingClientRect();
 
     // Track mouse position directly in ref (no React state)
     const handleMouseMove = (event: MouseEvent) => {
+      const { x, y } = canvas.getBoundingClientRect();
       mousePositionRef.current = {
-        x: event.clientX - left,
-        y: event.clientY - top,
+        x: event.clientX - x,
+        y: event.clientY - y,
       };
     };
 
@@ -581,6 +670,11 @@ function StreamComponent({
 
   // Handle profile click with navigation
   const handleProfileClick = (clickedProfile: Profile) => {
+    // Don't navigate for "other" placeholder sources
+    if (clickedProfile.id.startsWith(`other-${profile.id}`)) {
+      return;
+    }
+
     navigate(`/profile/${clickedProfile.id}`, {
       state: {
         viewTransition: true,
@@ -708,6 +802,7 @@ function StreamComponent({
       {mrr != null && (
         <Mrr value={mrr} position="absolute" bottom="0" left="50%" />
       )}
+      
     </StreamContainer>
   );
 }

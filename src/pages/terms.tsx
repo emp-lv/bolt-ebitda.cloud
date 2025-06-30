@@ -10,7 +10,7 @@ function Terms() {
       <Navbar />
 
       <div className="bg-dark-gradient">
-        <div className="pt-16 px-4 sm:px-6 lg:px-8 bg-noise">
+        <div className="py-16 px-4 sm:px-6 lg:px-8 bg-noise">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="py-16">
@@ -244,9 +244,9 @@ function Terms() {
                   </p>
                   
                   <div className="space-y-2 text-white/70">
-                    <p>Email: legal@myearnings.online</p>
-                    <p>Company: SIA EMP</p>
-                    <p>Address: Latvia</p>
+                    <p>Email: {`emils@{my_surname_here}.lv`}</p>
+                    <p>Name: Emils Plavenieks</p>
+                    <p>Address: Latvia, Riga</p>
                   </div>
                 </div>
               </section>

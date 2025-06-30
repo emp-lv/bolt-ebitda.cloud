@@ -1,16 +1,16 @@
 import React from 'react';
 import styled from 'styled-components';
 
-export function LiquidGlass({ children }: { children: React.ReactNode }) {
+export function LiquidGlass({ children, dark }: { children: React.ReactNode, dark?: boolean }) {
   return (
-    <LiquidGlassWapper>
+    <LiquidGlassWapper $dark={dark}>
       {children}
     </LiquidGlassWapper>
   )
 }
 export default LiquidGlass;
-const LiquidGlassWapper = styled.div`
-  padding: 1rem;
+const LiquidGlassWapper = styled.div<{ $dark?: boolean }>`
+  padding: 0.5rem;
   -webkit-appearance: none;
 	-moz-appearance: none;
 	overflow: hidden;
@@ -20,19 +20,19 @@ const LiquidGlassWapper = styled.div`
 	  outline: none;
   }
   
-  border-radius: 5.1rem 4.9rem;
-	background: rgba(255, 255, 255, 0.05);
+  border-radius: 2.5rem 2.3rem;
+	background: ${({ $dark }) => $dark ? "rgba(0, 0, 0, 0.4)" : "rgba(255, 255, 255, 0.05)"};
 	backdrop-filter: blur(4px); /* fallback if SVG backdrop fails on FF or similar */
-  backdrop-filter: url(#filter); 
+  backdrop-filter: url(#filter);
   -webkit-backdrop-filter: blur(3px);
 	box-shadow: inset 2px 2px 1px 0 rgba(255, 255, 255, 0.3),
     inset -2px -2px 2px 1px rgba(255, 255, 255, 0.3), 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.2);;
-	color: rgba(255, 255, 255, 0.8);
+	color: ${({ $dark }) => $dark ? "rgba(255, 255, 255, 0.8)" : "rgba(0, 0, 0, 0.8)"};
 	transition: all 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.5);
 	cursor: pointer;
   &:hover{
 	  transform: scale(1.03);
-	  border-radius: 4.9rem 5.1rem;
+	  border-radius: 2.3rem 2.5rem;
   }  
 `
 
@@ -44,7 +44,7 @@ export function LiquidGlassButton({ children, gl, ...props }: { children: React.
   )
 }
 
-const LiquidButton = styled.button`
+const LiquidButton = styled.button<{ $gl?: boolean }>`
   /* reset */
 	display: inline-block;
 	border: none;

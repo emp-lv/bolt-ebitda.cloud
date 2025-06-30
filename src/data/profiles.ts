@@ -1,70 +1,72 @@
-import { Profile } from '../types/profile';
+import { Profile } from "../types/profile";
 
 export const profiles: Profile[] = [
   {
-    id: '550e8400-e29b-41d4-a716-446655440001',
-    name: 'Emīls Pļavenieks',
-    createdAt: Date.now() - 86400000 * 30, // 30 days ago
-    image: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=400',
-    description: 'Full-stack developer building innovative web applications',
-    targetMrr: 44000,
-    type: 'person'
-  },
-  {
-    id: '550e8400-e29b-41d4-a716-446655440002',
-    name: 'TechFlow Solutions',
-    createdAt: Date.now() - 86400000 * 60, // 60 days ago
-    image: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=400',
-    description: 'Cloud-based project management platform for modern teams',
-    targetMrr: 50000,
-    type: 'company',
-    companyType: 'SaaS'
-  },
-  {
-    id: '550e8400-e29b-41d4-a716-446655440003',
-    name: 'Sarah Rodriguez',
+    id: "550e8400-e29b-41d4-a716-446655440001",
+    slug: "emplv",
+    name: "Emīls Pļavenieks",
     createdAt: Date.now() - 86400000 * 15, // 15 days ago
-    image: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400',
-    description: 'Digital marketing consultant helping businesses grow online',
-    targetMrr: 8000,
-    type: 'person'
+    image: "https://avatars.githubusercontent.com/u/16500803?v=4",
+    description: "Full-stack developer building innovative web applications",
+    targetMrr: 44000,
+    currentMrr: 15000,
+    type: "person",
+    sponsor: true,
   },
   {
-    id: '550e8400-e29b-41d4-a716-446655440004',
-    name: 'Creative Studio Pro',
-    createdAt: Date.now() - 86400000 * 45, // 45 days ago
-    image: 'https://images.pexels.com/photos/3184338/pexels-photo-3184338.jpeg?auto=compress&cs=tinysrgb&w=400',
-    description: 'Full-service creative agency specializing in brand identity and digital experiences',
-    targetMrr: 35000,
-    type: 'company',
-    companyType: 'Agency'
+    id: "550e8400-e29b-41d4-a716-446655440002",
+    name: "Vidyly",
+    createdAt: Date.now() - 86400000 * 15, // 15 days ago
+    image:
+      "https://avatars.githubusercontent.com/u/150893289?s=400&u=aaa0e43c059339a3dfa1fa303de6f8d4f86089fb&v=4",
+    description: "SaaS platform for digitalization of business processes",
+    targetMrr: 30000,
+    currentMrr: 1600,
+    type: "company",
+    companyType: "SaaS",
+    sponsor: true,
+    slug: "vidyly",
   },
   {
-    id: '550e8400-e29b-41d4-a716-446655440005',
-    name: 'EcoStyle Boutique',
-    createdAt: Date.now() - 86400000 * 90, // 90 days ago
-    image: 'https://images.pexels.com/photos/1884581/pexels-photo-1884581.jpeg?auto=compress&cs=tinysrgb&w=400',
-    description: 'Sustainable fashion retailer with eco-friendly clothing and accessories',
-    targetMrr: 25000,
-    type: 'company',
-    companyType: 'Retail'
+    id: "550e8400-e29b-41d4-a716-446655440004",
+    name: "ProductionLine.io",
+    createdAt: Date.now() - 86400000 * 15, // 15 days ago
+    image: "https://demo.productionline.io/assets/logo.png",
+    description: "Digitalize factory processes with trackable tasks",
+    targetMrr: 10000,
+    currentMrr: 1000,
+    type: "company",
+    companyType: "SaaS",
   },
   {
-    id: '550e8400-e29b-41d4-a716-446655440006',
-    name: 'The Growth Newsletter',
-    createdAt: Date.now() - 86400000 * 20, // 20 days ago
-    image: 'https://images.pexels.com/photos/590016/pexels-photo-590016.jpeg?auto=compress&cs=tinysrgb&w=400',
-    description: 'Weekly insights on business growth, marketing strategies, and entrepreneurship',
-    targetMrr: 12000,
-    type: 'company',
-    companyType: 'Newsletter'
-  }
+    id: "550e8400-e29b-41d4-a716-446655440005",
+    name: "Stripe",
+    slug: "stripe",
+    createdAt: Date.now() - 86400000 * 15, // 15 days ago
+    image: "https://thetribe.io/wp-content/uploads/Logo-Stripe-1080x675-1.jpg",
+    description: "Payment processing for online businesses",
+    type: "company",
+    companyType: "Other",
+  },
+  {
+    id: "550e8400-e29b-41d4-a716-446655440006",
+    name: "Hetzner",
+    slug: "hetzner",
+    createdAt: Date.now() - 86400000 * 15, // 15 days ago
+    image: "https://www.svgrepo.com/show/331425/hetzner.svg",
+    description: "Cloud hosting provider",
+    type: "company",
+    companyType: "Other",
+  },
 ];
 
 export const getProfileById = (id: string): Profile | undefined => {
-  return profiles.find(profile => profile.id === id);
+  return profiles.find((profile) => profile.id === id);
 };
 
 export const getProfileByName = (name: string): Profile | undefined => {
-  return profiles.find(profile => profile.name.toLowerCase().replace(/\s+/g, '-') === name.toLowerCase());
+  return profiles.find(
+    (profile) =>
+      profile.name.toLowerCase().replace(/\s+/g, "-") === name.toLowerCase()
+  );
 };

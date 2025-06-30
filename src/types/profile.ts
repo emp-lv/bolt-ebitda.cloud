@@ -1,6 +1,12 @@
-export type ProfileType = 'person' | 'company';
+export type ProfileType = "person" | "company";
 
-export type CompanyType = 'SaaS' | 'Agency' | 'Retail' | 'Royalties' | 'Newsletter' | 'Other';
+export type CompanyType =
+  | "SaaS"
+  | "Agency"
+  | "Retail"
+  | "Royalties"
+  | "Newsletter"
+  | "Other";
 
 export interface Profile {
   id: string; // UUIDv4
@@ -11,7 +17,9 @@ export interface Profile {
   description: string;
   currentMrr?: number;
   autoCalculateMrr?: boolean;
-  targetMrr: number;
+  targetMrr?: number;
   type: ProfileType;
   companyType?: CompanyType; // optional, only if type is "company"
+  sponsor?: boolean;
+  slug?: string;
 }

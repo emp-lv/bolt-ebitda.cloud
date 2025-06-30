@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Mail, Lock, User, Eye, EyeOff, Loader2, UserPlus, Check } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Loader2, UserPlus, Check } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import Navbar from '../components/navbar';
+import Footer from '../components/footer';
 
 function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -54,25 +55,17 @@ function SignUp() {
 
   return (
     <div className="min-h-screen relative">
-      <Navbar />
+      <Navbar centerOnly={true} />
 
       <div className="bg-dark-gradient">
-        <div className="px-4 sm:px-6 lg:px-8 bg-noise">
+        <div className="px-4 sm:px-6 lg:px-8 bg-noise pt-16 pb-32">
           <div className="max-w-md mx-auto">
             {/* Header */}
             <div className="py-8">
-              <Link 
-                to="/" 
-                className="inline-flex items-center space-x-2 text-white/80 hover:text-white transition-colors mb-8"
-              >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Back to Home</span>
-              </Link>
-              
-              <div className="text-center mb-8">
+              <div className="text-center mb-8 pt-16">
                 <div className="flex items-center justify-center space-x-3 mb-6">
-                  <UserPlus className="w-8 h-8 text-green-400" />
-                  <h1 className="text-4xl font-bold text-white">Create Account</h1>
+                  <UserPlus className="w-8 h-8 text-green-200" />
+                  <h1 className="text-4xl font-bold text-accent">Create Account</h1>
                 </div>
                 <p className="text-lg text-white/80">
                   Join the transparency movement and start building trust with your audience.
@@ -99,7 +92,7 @@ function SignUp() {
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                      className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-colors"
+                      className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-colors"
                       placeholder="Enter your full name"
                       required
                     />
@@ -116,7 +109,7 @@ function SignUp() {
                       type="email"
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-colors"
+                      className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-colors"
                       placeholder="Enter your email address"
                       required
                     />
@@ -133,7 +126,7 @@ function SignUp() {
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                      className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-colors"
+                      className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-colors"
                       placeholder="Create a strong password"
                       required
                     />
@@ -181,7 +174,7 @@ function SignUp() {
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={formData.confirmPassword}
                       onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-colors"
+                      className="w-full pl-12 pr-12 py-4 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-green-400 focus:ring-2 focus:ring-green-400/20 transition-colors"
                       placeholder="Confirm your password"
                       required
                     />
@@ -204,16 +197,16 @@ function SignUp() {
                       type="checkbox"
                       checked={formData.agreeToTerms}
                       onChange={(e) => setFormData(prev => ({ ...prev, agreeToTerms: e.target.checked }))}
-                      className="w-4 h-4 text-blue-400 bg-white/5 border-white/20 rounded focus:ring-blue-400 focus:ring-2 mt-1"
+                      className="w-4 h-4 text-green-400 bg-white/5 border-white/20 rounded focus:ring-green-400 focus:ring-2 mt-1"
                       required
                     />
                     <span className="text-white/80 text-sm leading-relaxed">
                       I agree to the{' '}
-                      <Link to="/terms" className="text-blue-400 hover:text-blue-300 transition-colors">
+                      <Link to="/terms" className="text-green-400 hover:text-green-300 transition-colors">
                         Terms of Service
                       </Link>{' '}
                       and{' '}
-                      <Link to="/privacy" className="text-blue-400 hover:text-blue-300 transition-colors">
+                      <Link to="/privacy" className="text-green-400 hover:text-green-300 transition-colors">
                         Privacy Policy
                       </Link>
                     </span>
@@ -223,7 +216,7 @@ function SignUp() {
                 <button
                   type="submit"
                   disabled={isLoading || !passwordsMatch || !isPasswordStrong || !formData.agreeToTerms}
-                  className="w-full bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 transform hover:scale-105"
+                  className="w-full bg-gradient-to-r from-green-600 to-green-600 hover:from-green-700 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-lg font-semibold transition-all duration-300 flex items-center justify-center space-x-2 transform hover:scale-105"
                 >
                   {isLoading && <Loader2 className="w-5 h-5 animate-spin" />}
                   <span>{isLoading ? 'Creating Account...' : 'Create Account'}</span>
@@ -235,7 +228,7 @@ function SignUp() {
                   Already have an account?{' '}
                   <Link
                     to="/signin"
-                    className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                    className="text-green-400 hover:text-green-300 font-medium transition-colors"
                   >
                     Sign in here
                   </Link>
@@ -252,7 +245,7 @@ function SignUp() {
                   <span className="text-white/80 text-sm">100% free forever - no hidden costs or limitations</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
+                  <div className="w-2 h-2 bg-green-400 rounded-full"></div>
                   <span className="text-white/80 text-sm">Build trust and credibility with your audience</span>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -266,17 +259,9 @@ function SignUp() {
               </div>
             </div>
 
-            {/* Trust Indicators */}
-            <div className="text-center mb-8">
-              <p className="text-white/60 text-sm mb-2">
-                Trusted by entrepreneurs worldwide
-              </p>
-              <p className="text-white/40 text-xs">
-                Your data is secure and encrypted. We never share your information.
-              </p>
-            </div>
           </div>
         </div>
+        <Footer />
       </div>
     </div>
   );

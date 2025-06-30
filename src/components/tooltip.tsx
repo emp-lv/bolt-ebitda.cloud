@@ -1,5 +1,6 @@
 import React, { ReactNode, useState } from "react";
 import styled from "styled-components";
+import LiquidGlass from "./liquidGlass";
 
 interface TooltipProps {
   trigger: ReactNode;
@@ -19,7 +20,9 @@ function Tooltip({ trigger, content, position = "right" }: TooltipProps) {
       </div>
       {showTooltip && (
         <TooltipContainer $position={position}>
-          <TooltipContent>{content}</TooltipContent>
+          <LiquidGlass dark={true}>
+            <TooltipContent>{content}</TooltipContent>
+          </LiquidGlass>
         </TooltipContainer>
       )}
     </TooltipWrapper>
@@ -45,13 +48,8 @@ const TooltipContainer = styled.div<{
 `;
 
 const TooltipContent = styled.div`
-  background: rgba(0, 0, 0, 0.9);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   min-width: 280px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 `;
 
 export default Tooltip;

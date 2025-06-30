@@ -4,6 +4,7 @@ import { Profile } from "../../types/profile";
 import Tooltip from "../tooltip";
 import ProfileTooltipContent from "../profileTooltipContent";
 import { Link } from "react-router-dom";
+import { MRRText } from "../mrr";
 
 interface CircleProps {
   type: "source" | "profile" | "destination";
@@ -82,7 +83,13 @@ function Circle({
   if (type === "profile") {
     return (
       <CenterProfileContainer $left={posX} $top={posY} $size={size}>
-        {hideName ? null : <ProfileName>{profile.name}</ProfileName>}
+        {/* {hideName ? null : <ProfileName>{profile.name}</ProfileName>} */}
+        {hideName ? null : (
+          <StyledMRRText>
+            <span></span>
+            <span>{profile.name}</span>
+          </StyledMRRText>
+        )}
         <CircleContainer
           to={`/profile/${profile.id}`}
           viewTransition
@@ -109,6 +116,25 @@ function Circle({
   }
 
   // For source and destination circles, show profile image with tooltip
+  // Check if this is an "other" placeholder source
+  const isOtherSource = profile.id.includes("other-");
+
+  if (isOtherSource) {
+    // Render non-clickable circle without tooltip for "other" sources
+    return (
+      <NonClickableCircleContainer
+        $left={posX}
+        $top={posY}
+        $size={size}
+        $isDragging={isDraggingRef.current}
+        $backgroundColor={BACKGROUND_COLORS[type]}
+        onMouseDown={handleMouseDown}
+      >
+        <CircleImage $size={size} src={profile.image} alt={profile.name} />
+      </NonClickableCircleContainer>
+    );
+  }
+
   return (
     <CircleContainer
       to={`/profile/${profile.id}`}
@@ -148,18 +174,13 @@ const CenterProfileContainer = styled.div<{
   `}
 `;
 
-const ProfileName = styled.div`
-  width: 100%;
-  position: absolute;
-  transform: translate(-50%, -64px);
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: white;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-  z-index: 10;
-  text-align: center;
+const StyledMRRText = styled(MRRText)`
+  font-size: 32px;
   white-space: nowrap;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  margin-top: -96px;
+  position: absolute;
 `;
 
 // const CircleContainer = styled.div<{
@@ -178,6 +199,30 @@ const CircleContainer = styled(Link)<{
   border-radius: 50%;
   z-index: 5;
   cursor: ${(props) => (props.$isDragging ? "grabbing" : "pointer")};
+  padding: 4px;
+
+  ${({ $left, $top, $backgroundColor }) => `
+    ${$left ? `left: ${$left}px;` : ""}
+    ${$top ? `top: ${$top}px;` : ""}
+    ${$left && $top ? `transform: translate(-50%, -50%);` : ""}
+    background-color: ${$backgroundColor};
+  `}
+`;
+
+const NonClickableCircleContainer = styled.div<{
+  $left?: number;
+  $top?: number;
+  $backgroundColor: string;
+  $isDragging?: boolean;
+  $size: number;
+}>`
+  position: absolute;
+  display: block;
+  width: ${({ $size }) => $size}px;
+  height: ${({ $size }) => $size}px;
+  border-radius: 50%;
+  z-index: 5;
+  cursor: ${(props) => (props.$isDragging ? "grabbing" : "default")};
   padding: 4px;
 
   ${({ $left, $top, $backgroundColor }) => `

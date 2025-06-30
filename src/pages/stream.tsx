@@ -7,13 +7,16 @@ import Navbar from "../components/navbar";
 import StreamComponent from "../components/stream/stream";
 import { useProfilesStore } from "../store/profilesStore";
 import { useUserProfilesStore } from "../store/userProfilesStore";
+import { Profile } from "../types/profile";
 
 function Stream() {
   const { profileId } = useParams<{ profileId: string }>();
   const { getProfileById: getGlobalProfile } = useProfilesStore();
   const { getProfileById: getUserProfile } = useUserProfilesStore();
-  
-  const profile = profileId ? (getUserProfile(profileId) || getGlobalProfile(profileId)) : null;
+
+  const profile = profileId
+    ? getUserProfile(profileId) || getGlobalProfile(profileId)
+    : null;
 
   if (!profile) {
     return (
@@ -42,15 +45,15 @@ function Stream() {
 
   return (
     <Container>
-      <Navbar profile={profile} showEditButton={true} />
-      <div className="pt-16"> {/* Add padding for floating navbar */}
+      <Navbar profile={profile as Profile} showEditButton={true} />
       <StreamComponent
         mrr={
-          profile.currentMrr ? Math.floor(profile.currentMrr / 1000) : undefined
+          "currentMrr" in profile && profile.currentMrr
+            ? Math.floor(profile.currentMrr / 1000)
+            : undefined
         }
-        profile={profile}
+        profile={profile as Profile}
       />
-      </div>
     </Container>
   );
 }

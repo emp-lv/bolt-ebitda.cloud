@@ -75,6 +75,11 @@ function Cluster({
     if (isDraggingRef.current) return;
     if (Math.abs(dragStartYRef.current - e.clientY) > 3) return;
 
+    // Don't handle clicks for "other" placeholder sources
+    if (profile.id.includes('other-')) {
+      return;
+    }
+
     if (onClick) {
       onClick(profile);
     }
@@ -92,10 +97,12 @@ function Cluster({
       onMouseDown={handleMouseDown}
     >
       <ClusterGrid $cols={cols} $rows={rows}>
-        {visibleProfiles.map((profile) => (
-          <Tooltip
-            key={profile.id}
-            trigger={
+        {visibleProfiles.map((profile) => {
+          const isOtherSource = profile.id.includes('other-');
+          
+          if (isOtherSource) {
+            // Render without tooltip for "other" sources
+            return (
               <ProfileContainer
                 key={profile.id}
                 onClick={(e) => handleProfileClick(profile, e)}
@@ -107,11 +114,30 @@ function Cluster({
                   title={profile.name}
                 />
               </ProfileContainer>
-            }
-            content={<ProfileTooltipContent profile={profile} />}
-            position={tooltipPosition}
-          />
-        ))}
+            );
+          }
+          
+          return (
+            <Tooltip
+              key={profile.id}
+              trigger={
+                <ProfileContainer
+                  key={profile.id}
+                  onClick={(e) => handleProfileClick(profile, e)}
+                  $viewTransitionName={`profile-${profile.id}`}
+                >
+                  <ProfileImage
+                    src={profile.image}
+                    alt={profile.name}
+                    title={profile.name}
+                  />
+                </ProfileContainer>
+              }
+              content={<ProfileTooltipContent profile={profile} />}
+              position={tooltipPosition}
+            />
+          );
+        })}
         {hasMore && (
           <MoreIndicator>
             +{profiles.length - visibleProfiles.length}

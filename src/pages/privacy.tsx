@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, Shield, Eye, Lock, Database, Users, Mail } from 'lucide-react';
+import { ArrowLeft, Shield, Eye, Lock, Database, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
@@ -10,7 +10,7 @@ function Privacy() {
       <Navbar />
 
       <div className="bg-dark-gradient">
-        <div className="pt-16 px-4 sm:px-6 lg:px-8 bg-noise">
+        <div className="py-16 px-4 sm:px-6 lg:px-8 bg-noise">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="py-16">
@@ -185,23 +185,6 @@ function Privacy() {
                     <h3 className="text-white font-medium mb-2">Restriction</h3>
                     <p className="text-sm">Limit how we process your personal information</p>
                   </div>
-                </div>
-              </section>
-
-              {/* Contact */}
-              <section className="bg-white/5 backdrop-blur-sm rounded-lg p-8 border border-white/10">
-                <div className="flex items-center space-x-3 mb-6">
-                  <Mail className="w-6 h-6 text-green-400" />
-                  <h2 className="text-2xl font-semibold text-white">Contact Us</h2>
-                </div>
-                
-                <p className="text-white/80 text-sm leading-relaxed mb-4">
-                  If you have questions about this Privacy Policy or want to exercise your rights, please contact us:
-                </p>
-                
-                <div className="space-y-2 text-white/70 text-sm">
-                  <p>Email: privacy@myearnings.online</p>
-                  <p>Address: SIA EMP, Latvia</p>
                 </div>
               </section>
             </div>

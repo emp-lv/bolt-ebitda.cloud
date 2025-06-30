@@ -1,6 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { ArrowLeft, CreditCard, DollarSign, Share2 } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { CreditCard, Euro, Share2 } from 'lucide-react';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 
@@ -190,12 +189,12 @@ function IntegrationRow({ integration }: { integration: Integration }) {
   }, []);
 
   return (
-    <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 overflow-hidden mb-8">
+    <div className="bg-slate-600/5 backdrop-blur-sm rounded-lg border border-slate-600/10 overflow-hidden mb-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 min-h-[300px]">
         {/* Left Section - Canvas with Icon */}
         <div 
           ref={canvasRef}
-          className="relative bg-gradient-to-br from-white/5 to-white/10 flex items-center justify-center overflow-hidden"
+          className="relative bg-gradient-to-br from-slate-600/5 to-slate-600/10 flex items-center justify-center overflow-hidden"
         >
           {/* Canvas Background */}
           <IntegrationCanvas 
@@ -205,8 +204,8 @@ function IntegrationRow({ integration }: { integration: Integration }) {
           />
           
           {/* Icon */}
-          <div className="relative z-10 w-24 h-24 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20">
-            <div className="text-white text-3xl">
+          <div className="relative z-10 w-24 h-24 bg-slate-600/10 backdrop-blur-sm rounded-full flex items-center justify-center border border-slate-600/20">
+            <div className="text-slate-600 text-3xl">
               {integration.icon}
             </div>
           </div>
@@ -215,15 +214,15 @@ function IntegrationRow({ integration }: { integration: Integration }) {
         {/* Right Section - Information */}
         <div className="p-8 flex flex-col justify-center">
           <div className="flex items-center space-x-3 mb-4">
-            <h3 className="text-2xl font-bold text-white">{integration.title}</h3>
+            <h3 className="text-2xl font-bold text-slate-600">{integration.title}</h3>
             {integration.status === 'coming-soon' && (
-              <span className="px-3 py-1 bg-yellow-500/20 text-yellow-300 text-sm rounded-full border border-yellow-500/30">
+              <span className="px-3 py-1 bg-yellow-500/20 text-slate-500 text-sm rounded-full border border-yellow-500/30">
                 Coming Soon
               </span>
             )}
           </div>
           
-          <p className="text-white/80 text-lg mb-6 leading-relaxed">
+          <p className="text-slate-600/80 text-lg mb-6 leading-relaxed">
             {integration.description}
           </p>
 
@@ -231,23 +230,10 @@ function IntegrationRow({ integration }: { integration: Integration }) {
             {integration.features.map((feature, index) => (
               <div key={index} className="flex items-start space-x-3">
                 <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-                <span className="text-white/90 text-sm leading-relaxed">{feature}</span>
+                <span className="text-slate-600/90 text-sm leading-relaxed">{feature}</span>
               </div>
             ))}
           </div>
-
-          <button
-            className={`inline-flex items-center space-x-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 ${
-              integration.status === 'available'
-                ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white transform hover:scale-105'
-                : 'bg-white/10 text-white/60 cursor-not-allowed'
-            }`}
-            disabled={integration.status === 'coming-soon'}
-          >
-            <span>
-              {integration.status === 'available' ? 'Connect Now' : 'Notify Me'}
-            </span>
-          </button>
         </div>
       </div>
     </div>
@@ -282,11 +268,10 @@ function Integrations() {
       features: [
         'Automatic PayPal transaction syncing',
         'Support for both one-time and recurring payments',
-        'Multi-currency transaction handling',
         'Subscription revenue tracking',
         'Secure API integration with PayPal'
       ],
-      icon: <DollarSign className="w-8 h-8" />,
+      icon: <Euro className="w-8 h-8" />,
       status: 'coming-soon',
       colorScheme: {
         primary: 200, // Cyan/Teal
@@ -301,7 +286,6 @@ function Integrations() {
       features: [
         'Customizable widget design and colors',
         'Multiple widget sizes and layouts',
-        'Real-time data updates',
         'Responsive design for all devices',
         'Easy embed code generation',
         'Privacy controls for sensitive data'
@@ -320,23 +304,15 @@ function Integrations() {
     <div className="min-h-screen relative home-page-bg">
       <Navbar />
 
-      <div className="pt-16 px-4 sm:px-6 lg:px-8">
+      <div className="pt-16 px-4 sm:px-6 lg:px-8 bg-noise">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="py-16">
-            <Link 
-              to="/" 
-              className="inline-flex items-center space-x-2 text-white/80 hover:text-white transition-colors mb-8"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Home</span>
-            </Link>
-            
             <div className="text-center mb-16">
-              <h1 className="text-6xl font-bold text-white mb-6">
-                Revenue Stream Integrations
+              <h1 className="text-6xl font-bold text-slate-600 mb-6">
+                MyEarnings integrations
               </h1>
-              <p className="text-xl text-white/80 max-w-3xl mx-auto">
+              <p className="text-xl text-slate-500 max-w-3xl mx-auto">
                 Connect your payment platforms and create shareable widgets to automate your revenue transparency and build trust with your audience.
               </p>
             </div>
@@ -350,25 +326,14 @@ function Integrations() {
           </div>
 
           {/* Coming Soon Notice */}
-          <div className="text-center mb-20 p-8 bg-gradient-to-r from-blue-50/10 to-purple-50/10 rounded-2xl border border-white/10">
-            <h3 className="text-2xl font-bold text-white mb-4">
-              More Integrations Coming Soon
+          <div className="text-center mb-20 p-8 bg-gradient-to-r from-slate-300/20 to-slate-200/20 rounded-2xl border border-slate-600/10">
+            <h3 className="text-2xl font-bold text-slate-600 mb-4">
+              All Integrations Coming Soon
             </h3>
-            <p className="text-white/80 mb-6 max-w-2xl mx-auto">
-              We're actively working on these integrations to make revenue transparency as seamless as possible. 
+            <p className="text-slate-500 mb-6 max-w-2xl mx-auto">
+              I will be working on these integrations to make revenue transparency as seamless as possible. After the hackathon judging period.
               Want to be notified when they're ready?
             </p>
-            <div className="flex items-center justify-center space-x-4">
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105">
-                Get Notified
-              </button>
-              <Link 
-                to="/featured"
-                className="text-blue-400 hover:text-blue-300 font-semibold px-8 py-3 rounded-lg border border-blue-400/20 hover:border-blue-300/40 transition-colors"
-              >
-                See Examples
-              </Link>
-            </div>
           </div>
         </div>
       </div>

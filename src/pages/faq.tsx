@@ -94,7 +94,7 @@ function FAQ() {
       <Navbar />
 
       <div className="bg-dark-gradient">
-        <div className="pt-16 px-4 sm:px-6 lg:px-8 bg-noise">
+        <div className="py-16 px-4 sm:px-6 lg:px-8 bg-noise">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
             <div className="py-16">
@@ -126,25 +126,6 @@ function FAQ() {
                   onToggle={() => toggleItem(index)}
                 />
               ))}
-            </div>
-
-            {/* Contact Section */}
-            <div className="bg-white/5 backdrop-blur-sm rounded-lg p-8 border border-white/10 mb-20">
-              <h2 className="text-2xl font-semibold text-white mb-4">Still have questions?</h2>
-              <p className="text-white/80 mb-6">
-                Can't find what you're looking for? Our support team is here to help.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105">
-                  Contact Support
-                </button>
-                <Link 
-                  to="/featured"
-                  className="text-blue-400 hover:text-blue-300 font-semibold px-6 py-3 rounded-lg border border-blue-400/20 hover:border-blue-300/40 transition-colors text-center"
-                >
-                  View Examples
-                </Link>
-              </div>
             </div>
           </div>
         </div>
